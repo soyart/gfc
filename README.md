@@ -1,4 +1,5 @@
-# gfc (go file crypt) 
+# gfc (go file crypt)
+
 gfc is my first programming project, written the first day I learned Go. I intend to learn Go from its development, so expect some bad code.
 
 Users can use gfc to encrypt archives before sending it to remote backup locations (i.e. cloud storage), which is my use case. Because gfc now supports asymmetric encryption, users can also exchange files safely with RSA-encrypted AES key files. Users can also use hexadecimal or Base64 mode to exchange secret messages easily (e.g. copying [WireGuard](/blog/2020/wireguard/) keys over Facebook messenger).
@@ -20,6 +21,7 @@ The AES part of the code was first copied from [this source](https://levelup.git
 > ALERT: gfc stable just merged with commits that changed how final file layout is written, so if you have files encrypted with previous build of `gfc`, decrypt it with older versions, and re-encrypt plaintext with the current version.
 
 ## Depedencies
+
 I try my best to keep dependencies low and aviod using external libraries. All of the packages required by gfc is from `golang.org/x`.
 
 - `"golang.org/x/term"`
@@ -35,6 +37,7 @@ required for [AES 256](https://en.wikipedia.org/wiki/Advanced_Encryption_Standar
 required for [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) key derivation function for passphrase
 
 ## Building gfc
+
 Build `gfc` executable from source with `go build`:
 
     $ go build;
@@ -44,6 +47,7 @@ The source can also be run with `go run`:
     $ go run main.go -i infile.pdf -o outfile.bin;
 
 ## gfc encryption keys
+
 ### AES encryptions
 
 > By default, gfc uses passphrases
@@ -53,9 +57,10 @@ Every gfc AES encryption uses a 256 bit key which is (by default) derived from u
 The AES key file should be random and **must be exactly 32 bytes** (passphrase can get longer than that though).
 
 #### Generating AES keys for gfc
+
 To generate a new AES key, I usually use `dd(1)` write 32 bytes of random character to a file:
 
-    $ dd if=/dev/random of=files/key.key bs=32 count=1;
+    $ dd if=/dev/random of=scripts/files/aes.key bs=32 count=1;
 
 I'm too lazy to add deterministic keyfile hasher, so gfc will assume that the key is well randomized and can be used right away without PBKDF2 or SHA256 hash.
 
@@ -74,6 +79,7 @@ Or
 The same is true for decryption:
 
     $ gfc -rsa -d -pri files/pri.pem -i /tmp/myAesKey.out -o /tmp/myAesKey;
+
 Or
 
     $ RSA_PRI_KEY=$(< files/pri.pem) gfc -rsa -d -i /tmp/myAesKey.out -o /tmp/myAesKey;
@@ -90,53 +96,56 @@ Then, derive a public key `pub.pem` from your private key `pri.pem`:
 
 ## PBKDF2 key derivation function
 
-Passphrases will be securely hashed using PBKDF2, which added random number *salt* to the passphrase before SHA256 hashing is performed to ensure that the derived key will always be unique, even if the same passphrase is reused.
+Passphrases will be securely hashed using PBKDF2, which added random number _salt_ to the passphrase before SHA256 hashing is performed to ensure that the derived key will always be unique, even if the same passphrase is reused.
 
-To decrypt files encrypted with key derived from a passphrase, that same *salt* is needed in order to convert input passphrase into the key used to encrypt it in the first place.
+To decrypt files encrypted with key derived from a passphrase, that same _salt_ is needed in order to convert input passphrase into the key used to encrypt it in the first place.
 
 Key and salt handling is in `gfc/crypt/key.go`.
 
 ## Usage
+
 ### Command-line flags
+
 gfc uses Go `flag` package to handle command-line argument. With `flag` packages, some of the flags are mapped to boolean (to toggle between mode, etc), and some are mapped to string variables. These flags can be easily changed in `main()`.
 
-	-d bool
-		Decrypt
-	-rsa bool
-		Use RSA encryption
+    -d bool
+    	Decrypt
+    -rsa bool
+    	Use RSA encryption
     -k bool
-		Use key file for AES
-	-H bool
-		Hexadecimal output (encrypt)
-		or input (decrypt)
-	-B bool
-		Base64 output (encrypt)
-		or input (decrypt)
-	-stdin bool
-		Get input from stdin
-	-stdout bool
-		Direct output to stdout
+    	Use key file for AES
+    -H bool
+    	Hexadecimal output (encrypt)
+    	or input (decrypt)
+    -B bool
+    	Base64 output (encrypt)
+    	or input (decrypt)
+    -stdin bool
+    	Get input from stdin
+    -stdout bool
+    	Direct output to stdout
 
-	-m string
-		AES modes, either GCM or CTR
-		(default GCM)
-	-f string
-		AES key file
-		(default "files/key.key")
-	-pub string
-		RSA public key file
-		(default "")
-	-pri string
-		RSA private key file
-		(default "")
-	-i string
-		Input file
-		(default "")
+    -m string
+    	AES modes, either GCM or CTR
+    	(default GCM)
+    -f string
+    	AES key file
+    	(default "files/key.key")
+    -pub string
+    	RSA public key file
+    	(default "")
+    -pri string
+    	RSA private key file
+    	(default "")
+    -i string
+    	Input file
+    	(default "")
     -o string
-		Output file
-		(default "/tmp/delete.me")
+    	Output file
+    	(default "/tmp/delete.me")
 
 ### Default values
+
 These values are mainly for testing purposes
 
 - Input filename > `files/plain`
@@ -150,23 +159,24 @@ These values are mainly for testing purposes
 - RSA key file filename > None, users must supply the file names, or with environment variable `$RSA_PUB_KEY` and `$RSA_PRI_KEY`
 
 ### Command examples
+
 `[-i <infile> -o <outfile>]` Specify input filename `secret.txt`, and output filename `secret.bin`. If `-i` or `-o` is omitted, default input filename and output filename will be used:
 
     $ gfc -i secret.txt -o secret.bin;
 
 `-d` Decrypt
 
-	$ gfc -d -i secret.bin -o secret.txt;
+    $ gfc -d -i secret.bin -o secret.txt;
 
 `-H` Encode output in hexadecimal
 
     $ gfc -H -i ~/Pictures/myNude.jpg -o /tmp/someNude.hex;
-	$ gfc -H -d -i ~/someNude.hex -o ~/Pictures/myNude.jpg;
+    $ gfc -H -d -i ~/someNude.hex -o ~/Pictures/myNude.jpg;
 
 `-B` Encode output in Base64
 
     $ gfc -B -i ~/Pictures/myNude.jpg -o /tmp/someNude.hex;
-	$ gfc -B -d -i ~/someNude.hex -o ~/Pictures/myNude.jpg;
+    $ gfc -B -d -i ~/someNude.hex -o ~/Pictures/myNude.jpg;
 
 `-stdin` Get input from stdin instead of reading from input file
 
@@ -190,7 +200,7 @@ You can combine `-stdin` and `stdout` like so:
 
 `-m <mode>` Use AES256-CTR for encryption:
 
-	$ gfc -m ctr -i secret.txt;
+    $ gfc -m ctr -i secret.txt;
 
 `-rsa` Use RSA encryption, with public key file `files/pub.pem`:
 
@@ -207,8 +217,8 @@ You can combine `-stdin` and `stdout` like so:
 
 `-k -f <key file>` Use key file to encrypt and decrypt:
 
-	$ gfc -m ctr -k -f ~/mykey.key -i secret.txt -o secret.bin;
-	$ gfc -m ctr -d -k -f ~/mykey.key -i secret.bin -o secret.out;
+    $ gfc -m ctr -k -f ~/mykey.key -i secret.txt -o secret.bin;
+    $ gfc -m ctr -d -k -f ~/mykey.key -i secret.bin -o secret.out;
 
 All the commands above will produce encrypted binary files. If you want your file encrypted into hex string, use `-H` flag instead, though this is not recommended because of larger file size.
 
@@ -218,13 +228,13 @@ All the commands above will produce encrypted binary files. If you want your fil
 
 gfc does not recursively encrypt/decrypt files - that would add needless complexity. If you are encrypting a directory (folder), use `tar(1)` to archive (and optionally compress) the directory, and use gfc to encrypt that tarball.
 
-For example, to create Zstd compressed archive of directory *before encryption* `foo`:
+For example, to create Zstd compressed archive of directory _before encryption_ `foo`:
 
     $ tar --zstd -cf foo.zstd foo;
 
 And extract it after decryption with:
-    
-	$ tar --zstd -xf foo.zstd;
+
+    $ tar --zstd -xf foo.zstd;
 
 Or with xz compression:
 
@@ -232,6 +242,7 @@ Or with xz compression:
     $ tar -xJf foo.txz;
 
 ## Testing gfc
+
 I wrote gfc before I learned about TDD, so no unit tests are written for gfc. However, a Bash script `test.sh` is shipped with gfc and can be use to test a combination of commands.
 
 ## Known issues
@@ -249,9 +260,11 @@ For now, gfc's exit status of `1` indicate user error (e.g. files unreadable/unw
 - Unstable spec
 
 ## Repositories
+
 There are 2 repositories for gfc, one on GitHub.com and one on GitLab.com
 
 The main (stable) branch of gfc is hosted on [Github](https://github.com/artnoi43/gfc), while the development branch is hosted on [GitLab](https://gitlab.com/artnoi/gfc)
 
 ## License
+
 This code is Free to use, i.e. as with BSD licensed software.

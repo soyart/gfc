@@ -18,12 +18,13 @@ var (
 	salt = rand.Reader
 )
 
-func RSA_encrypt(plaintext Buffer, pubKey []byte) Buffer {
+func RSA_encrypt(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r int) {
 	block, _ := pem.Decode([]byte(pubKey))
 	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to parse public key\n"))
-		panic(err)
+		r = ERSAPARSEPUB
+		return
 	}
 	pub := pubInterface.(*rsa.PublicKey)
 
@@ -33,20 +34,23 @@ func RSA_encrypt(plaintext Buffer, pubKey []byte) Buffer {
 		plaintextBytes = plaintext.Bytes()
 	}
 
-	ciphertext, err := rsa.EncryptOAEP(hash, salt, pub, plaintextBytes, nil)
+	ciphertextRaw, err := rsa.EncryptOAEP(hash, salt, pub, plaintextBytes, nil)
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to encrypt string\n"))
-		panic(err)
+		r = ERSAENCR
+		return
 	}
-	return bytes.NewBuffer(ciphertext)
+	ciphertext = bytes.NewBuffer(ciphertextRaw)
+	return
 }
 
-func RSA_decrypt(ciphertext Buffer, priKey []byte) Buffer {
+func RSA_decrypt(ciphertext Buffer, priKey []byte) (plaintext Buffer, r int) {
 	block, _ := pem.Decode([]byte(priKey))
 	pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to parse private key\n"))
-		panic(err)
+		r = ERSAPARSEPRI
+		return
 	}
 
 	var ciphertextBytes []byte
@@ -55,10 +59,12 @@ func RSA_decrypt(ciphertext Buffer, priKey []byte) Buffer {
 		ciphertextBytes = ciphertext.Bytes()
 	}
 
-	plaintext, err := rsa.DecryptOAEP(hash, salt, pri, ciphertextBytes, nil)
+	plaintextRaw, err := rsa.DecryptOAEP(hash, salt, pri, ciphertextBytes, nil)
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to decrypt string\n"))
-		panic(err)
+		r = ERSADECR
+		return
 	}
-	return bytes.NewBuffer(plaintext)
+	plaintext = bytes.NewBuffer(plaintextRaw)
+	return
 }

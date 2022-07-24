@@ -16,19 +16,20 @@ import (
 	"io"
 )
 
-func CTR_encrypt(plaintext Buffer, aesKey []byte) Buffer {
+func CTR_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 
 	key, salt := getKeySalt(aesKey, nil)
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		r = ECTRNEWCIPHER
+		return
 	}
 
 	iv := make([]byte, block.BlockSize())
 	rand.Read(iv)
 
 	stream := cipher.NewCTR(block, iv)
-	ciphertext := new(bytes.Buffer)
+	ciphertext = new(bytes.Buffer)
 	buf := make([]byte, 1024)
 	for {
 		n, err := plaintext.Read(buf)
@@ -40,15 +41,16 @@ func CTR_encrypt(plaintext Buffer, aesKey []byte) Buffer {
 			break
 		}
 		if err != nil {
-			panic(err)
+			r = ECTRREAD
+			return
 		}
 	}
 
 	ciphertext.Write(append(iv, salt...))
-	return ciphertext
+	return
 }
 
-func CTR_decrypt(ciphertext Buffer, aesKey []byte) Buffer {
+func CTR_decrypt(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
 
 	var data []byte
 	switch ciphertext := ciphertext.(type) {
@@ -61,17 +63,17 @@ func CTR_decrypt(ciphertext Buffer, aesKey []byte) Buffer {
 	key, _ := getKeySalt(aesKey, salt)
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		r = ECTRNEWCIPHER
+		return
 	}
 
 	lenIV := block.BlockSize()
-	iv := make([]byte, lenIV)
-	iv = data[lenData-lenIV-lenSalt : lenData-lenSalt]
+	iv := data[lenData-lenIV-lenSalt : lenData-lenSalt]
 	lenMsg := lenData - lenIV - lenSalt
 
 	stream := cipher.NewCTR(block, iv)
 	buf := make([]byte, 1024)
-	plaintext := new(bytes.Buffer)
+	plaintext = new(bytes.Buffer)
 	for {
 		n, err := ciphertext.Read(buf)
 		if n > 0 {
@@ -86,9 +88,10 @@ func CTR_decrypt(ciphertext Buffer, aesKey []byte) Buffer {
 			break
 		}
 		if err != nil {
-			panic(err)
+			r = ECTRREAD
+			return
 		}
 	}
 
-	return plaintext
+	return
 }

@@ -17,16 +17,18 @@ const (
 	lenNonce int = 12 // use 96-bit nonce
 )
 
-func GCM_encrypt(plaintext Buffer, aesKey []byte) Buffer {
+func GCM_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 	key, salt := getKeySalt(aesKey, nil)
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		r = EGCMNEWCIPHER
+		return
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		panic(err)
+		r = EGCMNEWGCM
+		return
 	}
 
 	nonce := make([]byte, lenNonce)
@@ -39,7 +41,7 @@ func GCM_encrypt(plaintext Buffer, aesKey []byte) Buffer {
 	}
 
 	// To encrypt, we use Seal(dst, nonce, plaintext, data []byte) []byte
-	ciphertext := new(bytes.Buffer)
+	ciphertext = new(bytes.Buffer)
 	ciphertext.Write(gcm.Seal(nil, nonce, plaintextBytes, nil))
 	ciphertext.Write(append(nonce, salt...))
 
@@ -48,10 +50,10 @@ func GCM_encrypt(plaintext Buffer, aesKey []byte) Buffer {
 	// This allow us to easily extract salt
 	// for key derivation later when decrypting.
 
-	return ciphertext
+	return
 }
 
-func GCM_decrypt(ciphertext Buffer, aesKey []byte) Buffer {
+func GCM_decrypt(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
 
 	var ciphertextBytes []byte
 	switch ciphertext := ciphertext.(type) {
@@ -62,25 +64,27 @@ func GCM_decrypt(ciphertext Buffer, aesKey []byte) Buffer {
 	lenData := len(ciphertextBytes)
 	salt := ciphertextBytes[lenData-lenSalt:]
 	key, _ := getKeySalt(aesKey, salt)
-	nonce := make([]byte, lenNonce)
-	nonce = ciphertextBytes[lenData-lenNonce-lenSalt : lenData-lenSalt]
+	nonce := ciphertextBytes[lenData-lenNonce-lenSalt : lenData-lenSalt]
 	ciphertextBytes = ciphertextBytes[:lenData-lenNonce-lenSalt]
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		r = EGCMNEWCIPHER
+		return
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		panic(err)
+		r = EGCMNEWGCM
+		return
 	}
 
 	/* To decrypt, we use Open(dst, nonce, ciphertext, ciphertext []byte) ([]byte, error) */
-	plaintext, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
+	plaintextRaw, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
 	if err != nil {
-		panic(err)
+		r = EGCMOPEN
+		return
 	}
-
-	return bytes.NewBuffer(plaintext)
+	plaintext = bytes.NewBuffer(plaintextRaw)
+	return
 }

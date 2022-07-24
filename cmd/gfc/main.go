@@ -58,6 +58,7 @@ func (f *flags) parseFlags() {
 
 func aesCrypt(ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 	var aesKey []byte
+	var err int
 	/* Read AES keyfile - if empty, passphrase will be used */
 	if f.usesAesKeyFile {
 		aesKey = f.aesKeyFile.ReadKey()
@@ -65,24 +66,26 @@ func aesCrypt(ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 	switch f.aesMode {
 	case "CTR", "ctr":
 		if f.decrypt {
-			aesOut = gfc.CTR_decrypt(ibuf, aesKey)
+			aesOut, err = gfc.CTR_decrypt(ibuf, aesKey)
 		} else {
-			aesOut = gfc.CTR_encrypt(ibuf, aesKey)
+			aesOut, err = gfc.CTR_encrypt(ibuf, aesKey)
 		}
 	case "GCM", "gcm":
 		if f.decrypt {
-			aesOut = gfc.GCM_decrypt(ibuf, aesKey)
+			aesOut, err = gfc.GCM_decrypt(ibuf, aesKey)
 		} else {
-			aesOut = gfc.GCM_encrypt(ibuf, aesKey)
+			aesOut, err = gfc.GCM_encrypt(ibuf, aesKey)
 		}
 	default:
-		os.Stderr.Write([]byte("Invalid AES mode\n"))
+		os.Stderr.Write([]byte("Invalid AES mode - only GCM or CTR is supported\n"))
 		os.Exit(1)
 	}
+	gfc.HandleErr(err)
 	return aesOut
 }
 
 func rsaCrypt(ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
+	var err int
 	if f.decrypt {
 		var priKey []byte
 		if f.usesAesKeyFile {
@@ -95,7 +98,7 @@ func rsaCrypt(ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 			os.Stderr.Write([]byte(ERR_NO_PRI))
 			os.Exit(1)
 		default:
-			rsaOut = gfc.RSA_decrypt(ibuf, priKey)
+			rsaOut, err = gfc.RSA_decrypt(ibuf, priKey)
 		}
 	} else {
 		var pubKey []byte
@@ -109,9 +112,10 @@ func rsaCrypt(ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 			os.Stderr.Write([]byte(ERR_NO_PUB))
 			os.Exit(1)
 		default:
-			rsaOut = gfc.RSA_encrypt(ibuf, pubKey)
+			rsaOut, err = gfc.RSA_encrypt(ibuf, pubKey)
 		}
 	}
+	gfc.HandleErr(err)
 	return rsaOut
 }
 

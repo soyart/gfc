@@ -79,9 +79,9 @@ if [[ -x gfc && ! -d gfc ]];
 	printf "WARN: Testing built binary not source\n";
 	printf "To test source, remove file named 'gfc'\n";
 
-	gfccmd='./main';
+	gfccmd='./gfc';
 else
-	gfccmd="go run ./cmd/main.go";
+	gfccmd="go run ./cmd/gfc/main.go";
 fi;
 
 encsrc='scripts/files/zeroes';

@@ -267,4 +267,4 @@ The main (stable) branch of gfc is hosted on [Github](https://github.com/artnoi4
 
 ## License
 
-This code is Free to use, i.e. as with BSD licensed software.
+This software is licensed under the MIT License.

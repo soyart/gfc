@@ -84,29 +84,30 @@ else
 	gfccmd="go run ./cmd/main.go";
 fi;
 
-encsrc='dev/zeroes';
+encsrc='scripts/files/zeroes';
+aeskey='scripts/files/aes.key';
 encdst0='/tmp/testgfc';
 decdst0='/tmp/zeroes';
 
-simyn "Run test RSA on file dev/aes.key with keys dev/pub.pem and dev/pri.pem?"\
+simyn "Run test RSA on file scripts/files/aes.key with keys scripts/files/pub.pem and scripts/files/pri.pem?"\
 && pub="files/pub.pem"\
 && pri="files/pri.pem"\
 && printf "Testing RSA encryption (ENV)\n"\
 && [[ -f $pub || -f $pri ]]\
-&& RSA_PUB_KEY=$(< $pub) sh -c "${gfccmd} -rsa -i dev/aes.key -o /tmp/rsaOut"\
+&& RSA_PUB_KEY=$(< $pub) sh -c "${gfccmd} -rsa -i "${aeskey}" -o /tmp/rsaOut"\
 && printf "Testing RSA decryption (ENV)\n"\
 && RSA_PRI_KEY=$(< $pri) sh -c "${gfccmd} -rsa -d -i /tmp/rsaOut -o /tmp/aes.key"\
 && printf "Testing equality\n"\
-&& diff /tmp/aes.key dev/aes.key\
-&& printf "✅ (ok) dev match\n"\
-&& sh -c "${gfccmd} -rsa -k -pub $pub -i dev/aes.key -o /tmp/rsaOut"\
+&& diff /tmp/aes.key scripts/files/aes.key\
+&& printf "✅ (ok) scripts/files match\n"\
+&& sh -c "${gfccmd} -rsa -k -pub $pub -i ${aeskey} -o /tmp/rsaOut"\
 && printf "Testing RSA decryption\n"\
 && sh -c "${gfccmd} -rsa -d -k -pri $pri -i /tmp/rsaOut -o /tmp/aes.key"\
 && printf "Testing equality\n"\
-&& diff /tmp/aes.key dev/aes.key\
+&& diff /tmp/aes.key "${aeskey}"\
 && printf "✅ (ok) file match\n"\
 && rm /tmp/rsaOut /tmp/aes.key\
-|| printf "❌ (failed) dev differ\n";
+|| printf "❌ (failed) scripts/files differ\n";
 
 line;
 

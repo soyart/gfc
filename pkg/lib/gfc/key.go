@@ -24,7 +24,10 @@ type KeyFile struct {
 
 func (F *KeyFile) ReadKey() (keyContent []byte) {
 	if err := F.open(); err != nil {
-		os.Stderr.Write([]byte("Could not open file for reading: " + (F.Name) + "\n"))
+		if F.Name == "" {
+			F.Name = "missing file name"
+		}
+		os.Stderr.Write([]byte("Could not open key file for reading: " + (F.Name) + "\n"))
 		os.Exit(1)
 	}
 

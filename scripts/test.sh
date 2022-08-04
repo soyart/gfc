@@ -16,32 +16,32 @@ typeset -A name flag ext;
 
 function gcm_key() {
 	name[gcm_key]='AES GCM (with keyfile)';
-	flag[gcm_key]="-k";
+	flag[gcm_key]="-k -f ./scripts/files/aes.key";
 	ext[gcm_key]='.gcm.wkey';
 }
 function gcm_hex_key() {
 	name[gcm_hex_key]='AES GCM (hex with keyfile)';
-	flag[gcm_hex_key]="-H -k";
+	flag[gcm_hex_key]="-H -k -f ./scripts/files/aes.key";
 	ext[gcm_hex_key]='.gcm.hex.wkey';
 }
 function gcm_b64_key() {
 	name[gcm_b64_key]='AES GCM (Base64 with keyfile)';
-	flag[gcm_b64_key]="-B -k";
+	flag[gcm_b64_key]="-B -k -f ./scripts/files/aes.key";
 	ext[gcm_b64_key]='.gcm.b64.wkey';
 }
 function ctr_key() {
 	name[ctr_key]='AES CTR (with keyfile)';
-	flag[ctr_key]="-m CTR -k";
+	flag[ctr_key]="-m CTR -k -f ./scripts/files/aes.key";
 	ext[ctr_key]+='.ctr.wkey';
 }
 function ctr_hex_key() {
 	name[ctr_hex_key]='AES CTR (hex with keyfile)';
-	flag[ctr_hex_key]="-m CTR -H -k";
+	flag[ctr_hex_key]="-m CTR -H -k -f ./scripts/files/aes.key";
 	ext[ctr_hex_key]+='.ctr.hex.wkey';
 }
 function ctr_b64_key() {
 	name[ctr_b64_key]='AES CTR (Base64 with keyfile)';
-	flag[ctr_b64_key]="-m CTR -B -k";
+	flag[ctr_b64_key]="-m CTR -B -k -f ./scripts/files/aes.key";
 	ext[ctr_b64_key]+='.ctr.b64.wkey';
 }
 function gcm() {

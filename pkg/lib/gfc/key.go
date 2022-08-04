@@ -45,8 +45,7 @@ func getPass() []byte {
 }
 
 /* Derive 256-bit key and salt using PBKDF2 */
-func hashKeySalt(passphrase []byte, salt []byte) ([]byte, []byte) {
-
+func genKeySalt(passphrase []byte, salt []byte) ([]byte, []byte) {
 	if salt == nil {
 		salt = make([]byte, lenSalt)
 		rand.Read(salt)
@@ -54,10 +53,12 @@ func hashKeySalt(passphrase []byte, salt []byte) ([]byte, []byte) {
 	return pbkdf2.Key(passphrase, salt, rounds, lenSalt, sha256.New), salt
 }
 
+// If AES key is nil, getPass() is called to get passphrase from user.
+// If salt is nil, new salt is created.
 func getKeySalt(aesKey []byte, salt []byte) ([]byte, []byte) {
 	if aesKey == nil {
 		/* Passphrase */
-		key, salt := hashKeySalt(getPass(), salt)
+		key, salt := genKeySalt(getPass(), salt)
 		return key, salt
 
 	} else {

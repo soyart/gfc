@@ -1,10 +1,12 @@
 package gfc
 
-import "os"
+type gfcError int
 
 const (
+	// Default
+	NoError gfcError = iota
 	// Error CTR new cipher
-	ECTRNEWCIPHER = iota + 1
+	ECTRNEWCIPHER
 	// Error CTR in read loop
 	ECTRREAD
 	// Error GCM new cipher
@@ -23,26 +25,27 @@ const (
 	ERSADECR
 )
 
-func HandleErr(err int) {
-	if err != 0 {
-		switch err {
-		case ECTRNEWCIPHER:
-			os.Stderr.Write([]byte("Error: CTR: New CTR\n"))
-		case ECTRREAD:
-			os.Stderr.Write([]byte("Error: CTR: Read Buffer\n"))
-		case EGCMNEWGCM:
-			os.Stderr.Write([]byte("Error: GCM: New GCM\n"))
-		case EGCMOPEN:
-			os.Stderr.Write([]byte("Error: GCM: Open\n"))
-		case ERSAPARSEPUB:
-			os.Stderr.Write([]byte("Error: RSA: Parse Public Key\n"))
-		case ERSAENCR:
-			os.Stderr.Write([]byte("Error: RSA: Encrypt\n"))
-		case ERSAPARSEPRI:
-			os.Stderr.Write([]byte("Error: RSA: Parse Private Key\n"))
-		case ERSADECR:
-			os.Stderr.Write([]byte("Error: RSA: Decrypt\n"))
-		}
-		os.Exit(2)
+func (err gfcError) Error() string {
+	switch err {
+	case ECTRNEWCIPHER:
+		return "CTR: New CTR"
+	case ECTRREAD:
+		return "CTR: Read Buffer"
+	case EGCMNEWCIPHER:
+		return "GCM: New cipher"
+	case EGCMNEWGCM:
+		return "GCM: New GCM"
+	case EGCMOPEN:
+		return "GCM: Open"
+	case ERSAPARSEPUB:
+		return "RSA: Parse Public Key"
+	case ERSAENCR:
+		return "RSA: Encrypt"
+	case ERSAPARSEPRI:
+		return "RSA: Parse Private Key"
+	case ERSADECR:
+		return "RSA: Decrypt"
+	default:
+		return "bad error - should not happen"
 	}
 }

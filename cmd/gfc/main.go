@@ -49,7 +49,7 @@ func (f *flags) parseFlags() {
 // aesCrypt prepares key for AES and calls the AES encryption/decryption functions
 func aesCrypt(f *flags, ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 	var aesKey []byte
-	var err int
+	var err error
 	/* Read AES keyfile - if empty, passphrase will be used */
 	if f.usesAesKeyFile {
 		aesKey = f.aesKeyFile.ReadKey()
@@ -71,13 +71,15 @@ func aesCrypt(f *flags, ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 		os.Stderr.Write([]byte("Invalid AES mode - only GCM or CTR is supported\n"))
 		os.Exit(1)
 	}
-	gfc.HandleErr(err)
+	if err != nil {
+		os.Stderr.WriteString("AES crypt error: " + err.Error())
+	}
 	return aesOut
 }
 
 // rsaCrypt prepares the RSA keypair and calls RSA encryption/decryption functions
 func rsaCrypt(f *flags, ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
-	var err int
+	var err error
 	if f.decrypt {
 		var priKey []byte
 		if f.usesAesKeyFile {
@@ -107,7 +109,9 @@ func rsaCrypt(f *flags, ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 			rsaOut, err = gfc.EncryptRSA(ibuf, pubKey)
 		}
 	}
-	gfc.HandleErr(err)
+	if err != nil {
+		os.Stderr.WriteString("RSA crypt error: " + err.Error())
+	}
 	return rsaOut
 }
 

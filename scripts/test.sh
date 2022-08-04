@@ -91,8 +91,8 @@ encdst0='tmp/testgfc';
 decdst0='tmp/zeroes';
 
 simyn "Run test RSA on file scripts/files/aes.key with keys scripts/files/pub.pem and scripts/files/pri.pem?"\
-&& pub="files/pub.pem"\
-&& pri="files/pri.pem"\
+&& pub="./scripts/files/pub.pem"\
+&& pri="./scripts/files/pri.pem"\
 && printf "Testing RSA encryption (ENV)\n"\
 && [[ -f $pub || -f $pri ]]\
 && RSA_PUB_KEY=$(< $pub) sh -c "${gfccmd} -rsa -i "${aeskey}" -o tmp/rsaOut"\

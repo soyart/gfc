@@ -17,17 +17,17 @@ const (
 	lenNonce int = 12 // use 96-bit nonce
 )
 
-func EncryptGCM(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
+func EncryptGCM(plaintext Buffer, aesKey []byte) (ciphertext Buffer, err error) {
 	key, salt := getKeySalt(aesKey, nil)
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		r = EGCMNEWCIPHER
+		err = EGCMNEWCIPHER
 		return
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		r = EGCMNEWGCM
+		err = EGCMNEWGCM
 		return
 	}
 
@@ -53,7 +53,7 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 	return
 }
 
-func DecryptGCM(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
+func DecryptGCM(ciphertext Buffer, aesKey []byte) (plaintext Buffer, err error) {
 
 	var ciphertextBytes []byte
 	switch ciphertext := ciphertext.(type) {
@@ -69,20 +69,20 @@ func DecryptGCM(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		r = EGCMNEWCIPHER
+		err = EGCMNEWCIPHER
 		return
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		r = EGCMNEWGCM
+		err = EGCMNEWGCM
 		return
 	}
 
 	/* To decrypt, we use Open(dst, nonce, ciphertext, ciphertext []byte) ([]byte, error) */
 	plaintextRaw, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
 	if err != nil {
-		r = EGCMOPEN
+		err = EGCMOPEN
 		return
 	}
 	plaintext = bytes.NewBuffer(plaintextRaw)

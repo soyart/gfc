@@ -1,4 +1,76 @@
------BEGIN RSA PRIVATE KEY-----
+package gfc
+
+import (
+	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"testing"
+)
+
+func TestRSA(t *testing.T) {
+	// Generate RSA key.
+	bitSize := 4096
+	pri, err := rsa.GenerateKey(rand.Reader, bitSize)
+	if err != nil {
+		panic(err)
+	}
+	pub := pri.Public()
+
+	// Encode private key to PKCS#1 ASN.1 PEM.
+	priPKCS1 := x509.MarshalPKCS1PrivateKey(pri)
+	if err != nil {
+		t.Fatalf("failed to marshal PKIX public key: %s", err.Error())
+	}
+	priPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: priPKCS1,
+		},
+	)
+
+	// Encode public key to PKCS#1 ASN.1 PEM.
+	pubPKCS1 := x509.MarshalPKCS1PublicKey(pub.(*rsa.PublicKey))
+	pubPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PUBLIC KEY",
+			Bytes: pubPKCS1,
+		},
+	)
+
+	plaintext := []byte("this_is_my_plain_text")
+	ciphertext, err := EncryptRSA(bytes.NewBuffer(plaintext), pubPEM)
+	if err != nil {
+		t.Fatalf("error encrypting RSA: %s", err.Error())
+	}
+	plaintextBuf, err := DecryptRSA(ciphertext, priPEM)
+	if err != nil {
+		t.Fatalf("error decrypting RSA: %s", err.Error())
+	}
+
+	if !bytes.Equal(plaintextBuf.(*bytes.Buffer).Bytes(), plaintext) {
+		t.Fatal("output does not match")
+	}
+}
+
+func TestRSAPKIXKeys(t *testing.T) {
+	plaintext := []byte("this_is_my_plain_text")
+	pub := []byte(`-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAwZf9X2xOevb5mwXPwfPb
+aK+QPJ7eWR6p6u/8jQDl15jxT6JVVErNq1X+9RYIn9dIcs07Zdr1hn7EEqI1wdyB
+hQLUdRSZpgKteqgQhKGT6Xv0KrNukDsdzHdFFRbNTNDj7SOe5k3jXUAInoFBkU8m
+cjnVvewJYcsdR88+QAdVonE2XB1KwGPjwL6YLmYznDT+3uB0KHJlWT44SL4DQQ3A
+6CPqc5HsbVOF+ggdrEEySBQVbpSkxcVIv7uuFWVETtQFPPZkDA5NR8N7ORfSiLRv
+JFdAEAij9w0nJkGoatLmVr/hOPWCxQ93rV97ojqsK9lI3n1AIKJOZZdfmuSin5XB
+HZp9VMoxKFjIX3hKzTtT4YFD8uYo/AZvLFqkjagUh9gvrwDi21ntpbuAuW5h64r9
+Obr5OTtlm03J4sXkxTKfN6sZyGgMXTTFY8Io11akly6qSbJOh8jmnuYTPflICnSz
+1ULARZjShDWjq8S/cJXJ6P55+fENjxevKBc07+mzk1V37no/Hh7SeQkrVsMNyQmy
+1AHTafRiQzyWl0q85B5JnOmBPy0xj2EO51mKyhZMQ+7jXzLyj1DbzxsDhKrnH7Pv
+Htg3u1J4KTxsVuNC1lYBOnNa8d8gEuySS/p3tQgnbUVM+8DNUBu0rZ5Tugl4juTI
+qns5IIvVeVCYgMfEE3o9xAUCAwEAAQ==
+-----END PUBLIC KEY-----`)
+	pri := []byte(`-----BEGIN RSA PRIVATE KEY-----
 MIIJKAIBAAKCAgEAwZf9X2xOevb5mwXPwfPbaK+QPJ7eWR6p6u/8jQDl15jxT6JV
 VErNq1X+9RYIn9dIcs07Zdr1hn7EEqI1wdyBhQLUdRSZpgKteqgQhKGT6Xv0KrNu
 kDsdzHdFFRbNTNDj7SOe5k3jXUAInoFBkU8mcjnVvewJYcsdR88+QAdVonE2XB1K
@@ -48,4 +120,16 @@ hS9KaRa0wvLUaFJnYL+32pVssj1vtEopCATY8ha9GVxpkX/gWP+7n5iFrUW7B1Dv
 sWv9bX2alFRdsBK74Y/9lKInUPWPPO+7W5j9nOqX5jcD2gcF+XdokE/cT4Tdxgd5
 XXb0npXsc8Ym9szlcCstvYE91/WQ776C1sawwdcv+aMne94XRwTqCDcJ7B5anSKE
 jkP42gl4KwsCeDJnygxV9nueVzkSqequ5Ha1oJ3HGCYWyqYV6s5z4x1D3ro=
------END RSA PRIVATE KEY-----
+-----END RSA PRIVATE KEY-----`)
+	ciphertext, err := EncryptRSA(bytes.NewBuffer(plaintext), pub)
+	if err != nil {
+		t.Fatalf("RSA encrypt with PKIX failed: %s", err.Error())
+	}
+	plaintextBuf, err := DecryptRSA(ciphertext, pri)
+	if err != nil {
+		t.Fatalf("RSA decrypt with PKIX failed: %s", err.Error())
+	}
+	if !bytes.Equal(plaintextBuf.(*bytes.Buffer).Bytes(), pri) {
+		t.Fatal("output does not match")
+	}
+}

@@ -60,15 +60,15 @@ func aesCrypt(ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 	switch f.aesMode {
 	case "CTR", "ctr":
 		if f.decrypt {
-			aesOut, err = gfc.CTR_decrypt(ibuf, aesKey)
+			aesOut, err = gfc.DecryptCTR(ibuf, aesKey)
 		} else {
-			aesOut, err = gfc.CTR_encrypt(ibuf, aesKey)
+			aesOut, err = gfc.EncryptCTR(ibuf, aesKey)
 		}
 	case "GCM", "gcm":
 		if f.decrypt {
-			aesOut, err = gfc.GCM_decrypt(ibuf, aesKey)
+			aesOut, err = gfc.DecryptGCM(ibuf, aesKey)
 		} else {
-			aesOut, err = gfc.GCM_encrypt(ibuf, aesKey)
+			aesOut, err = gfc.EncryptGCM(ibuf, aesKey)
 		}
 	default:
 		os.Stderr.Write([]byte("Invalid AES mode - only GCM or CTR is supported\n"))
@@ -92,7 +92,7 @@ func rsaCrypt(ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 			os.Stderr.Write([]byte(ERR_NO_PRI))
 			os.Exit(1)
 		default:
-			rsaOut, err = gfc.RSA_decrypt(ibuf, priKey)
+			rsaOut, err = gfc.DecryptRSA(ibuf, priKey)
 		}
 	} else {
 		var pubKey []byte
@@ -106,7 +106,7 @@ func rsaCrypt(ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 			os.Stderr.Write([]byte(ERR_NO_PUB))
 			os.Exit(1)
 		default:
-			rsaOut, err = gfc.RSA_encrypt(ibuf, pubKey)
+			rsaOut, err = gfc.EncryptRSA(ibuf, pubKey)
 		}
 	}
 	gfc.HandleErr(err)

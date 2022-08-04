@@ -18,7 +18,7 @@ var (
 	salt = rand.Reader
 )
 
-func RSA_encrypt(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r int) {
+func EncryptRSA(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r int) {
 	block, _ := pem.Decode([]byte(pubKey))
 	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
@@ -44,7 +44,7 @@ func RSA_encrypt(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r int) {
 	return
 }
 
-func RSA_decrypt(ciphertext Buffer, priKey []byte) (plaintext Buffer, r int) {
+func DecryptRSA(ciphertext Buffer, priKey []byte) (plaintext Buffer, r int) {
 	block, _ := pem.Decode([]byte(priKey))
 	pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {

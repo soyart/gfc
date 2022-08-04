@@ -17,7 +17,7 @@ const (
 	lenNonce int = 12 // use 96-bit nonce
 )
 
-func GCM_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
+func EncryptGCM(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 	key, salt := getKeySalt(aesKey, nil)
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -53,7 +53,7 @@ func GCM_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 	return
 }
 
-func GCM_decrypt(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
+func DecryptGCM(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
 
 	var ciphertextBytes []byte
 	switch ciphertext := ciphertext.(type) {

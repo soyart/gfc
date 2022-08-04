@@ -16,7 +16,7 @@ import (
 	"io"
 )
 
-func CTR_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
+func EncryptCTR(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 
 	key, salt := getKeySalt(aesKey, nil)
 	block, err := aes.NewCipher(key)
@@ -50,7 +50,7 @@ func CTR_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 	return
 }
 
-func CTR_decrypt(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
+func DecryptCTR(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
 
 	var data []byte
 	switch ciphertext := ciphertext.(type) {

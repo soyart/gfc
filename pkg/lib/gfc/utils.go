@@ -11,6 +11,15 @@ import (
 	"os"
 )
 
+type Encoding int
+
+/* Enum for encoding/decoding */
+const (
+	InvalidEncoding Encoding = iota
+	Base64
+	Hex
+)
+
 var (
 	b64Encoding = base64.StdEncoding
 	err         error
@@ -47,7 +56,8 @@ func (F *File) create() error {
 func (F *File) ReadFile() (rbuf Buffer) {
 	if err := F.open(); err != nil {
 		os.Stderr.Write([]byte(
-			"Could not open file for reading: " + F.Name + "\n"))
+			"Could not open file for reading: " + F.Name + "\n"),
+		)
 		os.Exit(1)
 	}
 
@@ -60,7 +70,8 @@ func (F *File) ReadFile() (rbuf Buffer) {
 func (F *File) WriteFile(obuf Buffer) {
 	if err := F.create(); err != nil {
 		os.Stderr.Write([]byte(
-			"Could not open file for writing: " + F.Name + "\n"))
+			"Could not open file for writing: " + F.Name + "\n"),
+		)
 		os.Exit(1)
 	}
 
@@ -68,12 +79,12 @@ func (F *File) WriteFile(obuf Buffer) {
 	obuf.WriteTo(F.fp)
 }
 
-func Decode(encoding int, raw Buffer) (decoded Buffer) {
+func Decode(encoding Encoding, raw Buffer) (decoded Buffer) {
 	var decoder io.Reader
 	switch encoding {
-	case 0:
+	case Base64:
 		decoder = base64.NewDecoder(b64Encoding, raw)
-	case 1:
+	case Hex:
 		decoder = hex.NewDecoder(raw)
 	default:
 		os.Stderr.Write([]byte("Unknown decoding\n"))
@@ -84,18 +95,18 @@ func Decode(encoding int, raw Buffer) (decoded Buffer) {
 	return decoded
 }
 
-func Encode(encoding int, raw Buffer) (encoded Buffer) {
+func Encode(encoding Encoding, raw Buffer) (encoded Buffer) {
 	// Need empty interface because base64.NewEncoder returns io.WriteCloser,
 	// while hex.NewEncoder returns io.Writer
 	var encoder interface{}
 	encoded = new(bytes.Buffer)
 	switch encoding {
-	case 0:
+	case Base64:
 		encoder = base64.NewEncoder(b64Encoding, encoded)
 		// Base64 encodings operate in 4-byte blocks; when finished writing,
 		// the caller must Close the returned encoder to flush any partially written blocks.
 		defer encoder.(io.WriteCloser).Close()
-	case 1:
+	case Hex:
 		encoder = hex.NewEncoder(encoded)
 	default:
 		os.Stderr.Write([]byte("Unknown encoding\n"))

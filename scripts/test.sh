@@ -6,6 +6,7 @@
 . "$(command -v yn.sh)";
 . "$(command -v lb.sh)";
 
+mkdir -p tmp;
 typeset -A name flag ext;
 
 # If you dont want to run certain test functions,
@@ -15,32 +16,32 @@ typeset -A name flag ext;
 
 function gcm_key() {
 	name[gcm_key]='AES GCM (with keyfile)';
-	flag[gcm_key]="-k";
+	flag[gcm_key]="-k -f ./scripts/files/aes.key";
 	ext[gcm_key]='.gcm.wkey';
 }
 function gcm_hex_key() {
 	name[gcm_hex_key]='AES GCM (hex with keyfile)';
-	flag[gcm_hex_key]="-H -k";
+	flag[gcm_hex_key]="-H -k -f ./scripts/files/aes.key";
 	ext[gcm_hex_key]='.gcm.hex.wkey';
 }
 function gcm_b64_key() {
 	name[gcm_b64_key]='AES GCM (Base64 with keyfile)';
-	flag[gcm_b64_key]="-B -k";
+	flag[gcm_b64_key]="-B -k -f ./scripts/files/aes.key";
 	ext[gcm_b64_key]='.gcm.b64.wkey';
 }
 function ctr_key() {
 	name[ctr_key]='AES CTR (with keyfile)';
-	flag[ctr_key]="-m CTR -k";
+	flag[ctr_key]="-m CTR -k -f ./scripts/files/aes.key";
 	ext[ctr_key]+='.ctr.wkey';
 }
 function ctr_hex_key() {
 	name[ctr_hex_key]='AES CTR (hex with keyfile)';
-	flag[ctr_hex_key]="-m CTR -H -k";
+	flag[ctr_hex_key]="-m CTR -H -k -f ./scripts/files/aes.key";
 	ext[ctr_hex_key]+='.ctr.hex.wkey';
 }
 function ctr_b64_key() {
 	name[ctr_b64_key]='AES CTR (Base64 with keyfile)';
-	flag[ctr_b64_key]="-m CTR -B -k";
+	flag[ctr_b64_key]="-m CTR -B -k -f ./scripts/files/aes.key";
 	ext[ctr_b64_key]+='.ctr.b64.wkey';
 }
 function gcm() {
@@ -86,27 +87,27 @@ fi;
 
 encsrc='scripts/files/zeroes';
 aeskey='scripts/files/aes.key';
-encdst0='/tmp/testgfc';
-decdst0='/tmp/zeroes';
+encdst0='tmp/testgfc';
+decdst0='tmp/zeroes';
 
 simyn "Run test RSA on file scripts/files/aes.key with keys scripts/files/pub.pem and scripts/files/pri.pem?"\
-&& pub="files/pub.pem"\
-&& pri="files/pri.pem"\
+&& pub="./scripts/files/pub.pem"\
+&& pri="./scripts/files/pri.pem"\
 && printf "Testing RSA encryption (ENV)\n"\
 && [[ -f $pub || -f $pri ]]\
-&& RSA_PUB_KEY=$(< $pub) sh -c "${gfccmd} -rsa -i "${aeskey}" -o /tmp/rsaOut"\
+&& RSA_PUB_KEY=$(< $pub) sh -c "${gfccmd} -rsa -i "${aeskey}" -o tmp/rsaOut"\
 && printf "Testing RSA decryption (ENV)\n"\
-&& RSA_PRI_KEY=$(< $pri) sh -c "${gfccmd} -rsa -d -i /tmp/rsaOut -o /tmp/aes.key"\
+&& RSA_PRI_KEY=$(< $pri) sh -c "${gfccmd} -rsa -d -i tmp/rsaOut -o tmp/aes.key"\
 && printf "Testing equality\n"\
-&& diff /tmp/aes.key scripts/files/aes.key\
+&& diff tmp/aes.key scripts/files/aes.key\
 && printf "✅ (ok) scripts/files match\n"\
-&& sh -c "${gfccmd} -rsa -k -pub $pub -i ${aeskey} -o /tmp/rsaOut"\
+&& sh -c "${gfccmd} -rsa -k -pub $pub -i ${aeskey} -o tmp/rsaOut"\
 && printf "Testing RSA decryption\n"\
-&& sh -c "${gfccmd} -rsa -d -k -pri $pri -i /tmp/rsaOut -o /tmp/aes.key"\
+&& sh -c "${gfccmd} -rsa -d -k -pri $pri -i tmp/rsaOut -o tmp/aes.key"\
 && printf "Testing equality\n"\
-&& diff /tmp/aes.key "${aeskey}"\
+&& diff tmp/aes.key "${aeskey}"\
 && printf "✅ (ok) file match\n"\
-&& rm /tmp/rsaOut /tmp/aes.key\
+&& rm tmp/rsaOut tmp/aes.key\
 || printf "❌ (failed) scripts/files differ\n";
 
 line;

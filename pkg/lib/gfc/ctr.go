@@ -16,13 +16,13 @@ import (
 	"io"
 )
 
-func CTR_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
+func EncryptCTR(plaintext Buffer, aesKey []byte) (ciphertext Buffer, err error) {
 
 	key, salt := getKeySalt(aesKey, nil)
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		r = ECTRNEWCIPHER
-		return
+		err = ECTRNEWCIPHER
+		return nil, err
 	}
 
 	iv := make([]byte, block.BlockSize())
@@ -41,8 +41,8 @@ func CTR_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 			break
 		}
 		if err != nil {
-			r = ECTRREAD
-			return
+			err = ECTRREAD
+			return nil, err
 		}
 	}
 
@@ -50,7 +50,7 @@ func CTR_encrypt(plaintext Buffer, aesKey []byte) (ciphertext Buffer, r int) {
 	return
 }
 
-func CTR_decrypt(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
+func DecryptCTR(ciphertext Buffer, aesKey []byte) (plaintext Buffer, err error) {
 
 	var data []byte
 	switch ciphertext := ciphertext.(type) {
@@ -63,7 +63,7 @@ func CTR_decrypt(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
 	key, _ := getKeySalt(aesKey, salt)
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		r = ECTRNEWCIPHER
+		err = ECTRNEWCIPHER
 		return
 	}
 
@@ -88,8 +88,8 @@ func CTR_decrypt(ciphertext Buffer, aesKey []byte) (plaintext Buffer, r int) {
 			break
 		}
 		if err != nil {
-			r = ECTRREAD
-			return
+			err = ECTRREAD
+			return nil, err
 		}
 	}
 

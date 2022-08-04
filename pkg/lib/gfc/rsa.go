@@ -11,6 +11,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -18,15 +20,20 @@ var (
 	salt = rand.Reader
 )
 
-func RSA_encrypt(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r int) {
+func EncryptRSA(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r error) {
 	block, _ := pem.Decode([]byte(pubKey))
 	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	var pub *rsa.PublicKey
 	if err != nil {
-		os.Stderr.Write([]byte("Failed to parse public key\n"))
-		r = ERSAPARSEPUB
-		return
+		pub, err = x509.ParsePKCS1PublicKey(block.Bytes)
+		if err != nil {
+			os.Stderr.Write([]byte("Failed to parse public key\n"))
+			r = ERSAPARSEPUB
+			return nil, errors.Wrap(r, err.Error())
+		}
+	} else {
+		pub = pubInterface.(*rsa.PublicKey)
 	}
-	pub := pubInterface.(*rsa.PublicKey)
 
 	var plaintextBytes []byte
 	switch plaintext := plaintext.(type) {
@@ -36,21 +43,21 @@ func RSA_encrypt(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r int) {
 
 	ciphertextRaw, err := rsa.EncryptOAEP(hash, salt, pub, plaintextBytes, nil)
 	if err != nil {
-		os.Stderr.Write([]byte("Failed to encrypt string\n"))
+		os.Stderr.Write([]byte("Failed to encrypt string: " + err.Error() + "\n"))
 		r = ERSAENCR
-		return
+		return nil, errors.Wrap(r, err.Error())
 	}
 	ciphertext = bytes.NewBuffer(ciphertextRaw)
-	return
+	return ciphertext, nil
 }
 
-func RSA_decrypt(ciphertext Buffer, priKey []byte) (plaintext Buffer, r int) {
+func DecryptRSA(ciphertext Buffer, priKey []byte) (plaintext Buffer, r error) {
 	block, _ := pem.Decode([]byte(priKey))
 	pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		os.Stderr.Write([]byte("Failed to parse private key\n"))
+		os.Stderr.Write([]byte("Failed to parse private key: " + err.Error() + "\n"))
 		r = ERSAPARSEPRI
-		return
+		return nil, errors.Wrap(r, err.Error())
 	}
 
 	var ciphertextBytes []byte
@@ -63,8 +70,8 @@ func RSA_decrypt(ciphertext Buffer, priKey []byte) (plaintext Buffer, r int) {
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to decrypt string\n"))
 		r = ERSADECR
-		return
+		return nil, errors.Wrap(r, err.Error())
 	}
 	plaintext = bytes.NewBuffer(plaintextRaw)
-	return
+	return plaintext, nil
 }

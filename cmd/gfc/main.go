@@ -9,12 +9,6 @@ import (
 	"github.com/artnoi43/gfc/pkg/lib/gfc"
 )
 
-/* Enum for encoding/decoding */
-const (
-	base64 = iota
-	hex
-)
-
 /* Command-line flags */
 type flags struct {
 	decrypt             bool
@@ -131,9 +125,9 @@ func input() (ibuf gfc.Buffer) {
 	/* Decode input when decrypting */
 	if f.decrypt {
 		if f.usesBase64 {
-			ibuf = gfc.Decode(base64, ibuf)
+			ibuf = gfc.Decode(gfc.Base64, ibuf)
 		} else if f.usesHex {
-			ibuf = gfc.Decode(hex, ibuf)
+			ibuf = gfc.Decode(gfc.Hex, ibuf)
 		}
 	}
 	/* Return (un)processed input buffer */
@@ -154,9 +148,9 @@ func output(obuf gfc.Buffer) {
 	/* Encode output when encrypting */
 	if !f.decrypt {
 		if f.usesBase64 {
-			obuf = gfc.Encode(base64, obuf)
+			obuf = gfc.Encode(gfc.Base64, obuf)
 		} else if f.usesHex {
-			obuf = gfc.Encode(hex, obuf)
+			obuf = gfc.Encode(gfc.Hex, obuf)
 		}
 	}
 	var outfile *os.File

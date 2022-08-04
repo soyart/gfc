@@ -22,14 +22,10 @@ type flags struct {
 	pubFile, priFile    gfc.KeyFile
 }
 
-/* Command-line flags are global */
-var (
-	f flags
-)
-
 func main() {
+	f := new(flags)
 	f.parseFlags()
-	output(crypt(input()))
+	output(crypt(input(f)))
 }
 
 func (f *flags) parseFlags() {
@@ -50,7 +46,8 @@ func (f *flags) parseFlags() {
 	flag.Parse()
 }
 
-func aesCrypt(ibuf gfc.Buffer) (aesOut gfc.Buffer) {
+// aesCrypt prepares key for AES and calls the AES encryption/decryption functions
+func aesCrypt(f *flags, ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 	var aesKey []byte
 	var err int
 	/* Read AES keyfile - if empty, passphrase will be used */
@@ -78,7 +75,8 @@ func aesCrypt(ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 	return aesOut
 }
 
-func rsaCrypt(ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
+// rsaCrypt prepares the RSA keypair and calls RSA encryption/decryption functions
+func rsaCrypt(f *flags, ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 	var err int
 	if f.decrypt {
 		var priKey []byte
@@ -113,7 +111,8 @@ func rsaCrypt(ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 	return rsaOut
 }
 
-func input() (ibuf gfc.Buffer) {
+func input(f *flags) (*flags, gfc.Buffer) {
+	var ibuf gfc.Buffer
 	/* Read from stdin or file */
 	if f.stdin {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -131,20 +130,21 @@ func input() (ibuf gfc.Buffer) {
 		}
 	}
 	/* Return (un)processed input buffer */
-	return ibuf
+	return f, ibuf
 }
 
-func crypt(ibuf gfc.Buffer) (obuf gfc.Buffer) {
+func crypt(f *flags, ibuf gfc.Buffer) (*flags, gfc.Buffer) {
+	var obuf gfc.Buffer
 	if f.rsa {
-		obuf = rsaCrypt(ibuf)
+		obuf = rsaCrypt(f, ibuf)
 	} else {
-		obuf = aesCrypt(ibuf)
+		obuf = aesCrypt(f, ibuf)
 	}
 	/* Return encrypted/decrypted buffer */
-	return obuf
+	return f, obuf
 }
 
-func output(obuf gfc.Buffer) {
+func output(f *flags, obuf gfc.Buffer) {
 	/* Encode output when encrypting */
 	if !f.decrypt {
 		if f.usesBase64 {

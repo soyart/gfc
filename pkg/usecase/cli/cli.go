@@ -23,6 +23,7 @@ type Command interface {
 
 func infile(fname string) (*os.File, error) {
 	if fname == "" {
+		gfc.Write(os.Stdout, "Text input:\n")
 		return os.Stdin, nil
 	}
 	return os.Open(fname)
@@ -129,11 +130,15 @@ func preprocess(infile *os.File, decrypt bool, encoding gfc.Encoding) (gfc.Buffe
 		}
 	}
 
-	err := infile.Close()
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to close infile %s", infile.Name())
+	// Only close non-stdin file
+	if infile != os.Stdin {
+		err := infile.Close()
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to close infile %s", infile.Name())
+		}
 	}
 
+	var err error
 	if decrypt {
 		gfcInput, err = gfc.Decode(encoding, gfcInput)
 		if err != nil {

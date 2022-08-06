@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 tarballe="/tmp/$1.zstd.tar";
 tarballd="$2.zstd.tar";
 gfcout="$tarballe.gfc.out";

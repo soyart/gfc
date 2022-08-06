@@ -43,11 +43,11 @@ I'm too lazy to add deterministic keyfile hasher, so gfc will assume that the ke
 
 First, you create a private key. In this case, it will be 4096-byte long with name `pri.pem`:
 
-    $ openssl genrsa -out pri.pem 4096
+    $ openssl genrsa -out pri.pem 4096;
 
 Then, derive a public key `pub.pem` from your private key `pri.pem`:
 
-    $ openssl rsa -in pri.pem -outform PEM -pubout -out pub.pem
+    $ openssl rsa -in pri.pem -outform PEM -pubout -out pub.pem;
 
 ## PBKDF2 key derivation function
 

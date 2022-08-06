@@ -4,10 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"flag"
-	"io"
 	"os"
 
-	"github.com/artnoi43/gfc/pkg/lib/gfc"
+	"github.com/artnoi43/gfc/pkg/usecase/gfc"
 )
 
 /* Command-line flags */
@@ -47,7 +46,7 @@ func (f *flags) parseFlags() {
 	flag.Parse()
 
 	if f.infile.Name == "" && !f.stdin {
-		write(os.Stderr, "no input file\n")
+		gfc.Write(os.Stderr, "no input file\n")
 		os.Exit(1)
 	}
 
@@ -58,7 +57,7 @@ func (f *flags) parseFlags() {
 			if !found {
 				f.aesKeyFile.Name = keyFilename
 			} else {
-				write(os.Stderr, "no AES key file\n")
+				gfc.Write(os.Stderr, "no AES key file\n")
 				os.Exit(1)
 			}
 		}
@@ -87,11 +86,11 @@ func handleAES(f *flags, ibuf gfc.Buffer) (aesOut gfc.Buffer) {
 			aesOut, err = gfc.EncryptGCM(ibuf, aesKey)
 		}
 	default:
-		write(os.Stderr, "Invalid AES mode - only GCM or CTR is supported\n")
+		gfc.Write(os.Stderr, "Invalid AES mode - only GCM or CTR is supported\n")
 		os.Exit(1)
 	}
 	if err != nil {
-		write(os.Stderr, "AES crypt error: "+err.Error()+"\n")
+		gfc.Write(os.Stderr, "AES crypt error: "+err.Error()+"\n")
 	}
 	return aesOut
 }
@@ -104,11 +103,11 @@ func handleRSA(f *flags, ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 		if f.useKey {
 			priKey = f.priFile.ReadKey()
 		} else {
-			priKey = []byte(os.Getenv("RSA_PRI_KEY"))
+			priKey = []byte(os.Getenv("PRI"))
 		}
 		switch len(priKey) {
 		case 0:
-			write(os.Stderr, ErrMsgNoPri)
+			gfc.Write(os.Stderr, ErrMsgNoPri)
 			os.Exit(1)
 		default:
 			rsaOut, err = gfc.DecryptRSA(ibuf, priKey)
@@ -118,18 +117,18 @@ func handleRSA(f *flags, ibuf gfc.Buffer) (rsaOut gfc.Buffer) {
 		if f.useKey {
 			pubKey = f.pubFile.ReadKey()
 		} else {
-			pubKey = []byte(os.Getenv("RSA_PUB_KEY"))
+			pubKey = []byte(os.Getenv("PUB"))
 		}
 		switch len(pubKey) {
 		case 0:
-			write(os.Stderr, ErrMsgNoPub)
+			gfc.Write(os.Stderr, ErrMsgNoPub)
 			os.Exit(1)
 		default:
 			rsaOut, err = gfc.EncryptRSA(ibuf, pubKey)
 		}
 	}
 	if err != nil {
-		write(os.Stderr, "RSA crypt error: "+err.Error()+"\n")
+		gfc.Write(os.Stderr, "RSA crypt error: "+err.Error()+"\n")
 	}
 	return rsaOut
 }
@@ -146,10 +145,14 @@ func input(f *flags) (*flags, gfc.Buffer) {
 	}
 	/* Decode input when decrypting */
 	if f.decrypt {
+		var err error
 		if f.usesBase64 {
-			ibuf = gfc.Decode(gfc.Base64, ibuf)
+			ibuf, err = gfc.Decode(gfc.Base64, ibuf)
 		} else if f.usesHex {
-			ibuf = gfc.Decode(gfc.Hex, ibuf)
+			ibuf, err = gfc.Decode(gfc.Hex, ibuf)
+		}
+		if err != nil {
+			gfc.Write(os.Stderr, "input decoding failed")
 		}
 	}
 	/* Return (un)processed input buffer */
@@ -170,10 +173,15 @@ func crypt(f *flags, ibuf gfc.Buffer) (*flags, gfc.Buffer) {
 func output(f *flags, obuf gfc.Buffer) {
 	/* Encode output when encrypting */
 	if !f.decrypt {
+		var err error
 		if f.usesBase64 {
-			obuf = gfc.Encode(gfc.Base64, obuf)
+			obuf, err = gfc.Encode(gfc.Base64, obuf)
 		} else if f.usesHex {
-			obuf = gfc.Encode(gfc.Hex, obuf)
+			obuf, err = gfc.Encode(gfc.Hex, obuf)
+		}
+		if err != nil {
+			gfc.Write(os.Stderr, "output encoding failed")
+			os.Exit(2)
 		}
 	}
 	var outfile *os.File
@@ -186,11 +194,7 @@ func output(f *flags, obuf gfc.Buffer) {
 	obuf.WriteTo(outfile)
 }
 
-func write(w io.Writer, s string) {
-	w.Write([]byte(s))
-}
-
 const (
-	ErrMsgNoPub = "No public key specified\nUse '-k -pub <path>', or environment variable RSA_PUB_KEY to specify RSA public key\n"
-	ErrMsgNoPri = "No private key specified\nUse '-k -pri <path>', or environment variable RSA_PRI_KEY to specify RSA private key\n"
+	ErrMsgNoPub = "No public key specified\nUse '-k -pub <path>', or environment variable PUB to specify RSA public key\n"
+	ErrMsgNoPri = "No private key specified\nUse '-k -pri <path>', or environment variable PRI to specify RSA private key\n"
 )

@@ -22,7 +22,7 @@ type KeyFile struct {
 	File
 }
 
-func (F *KeyFile) ReadKey() (keyContent []byte) {
+func (F *KeyFile) ReadKey() []byte {
 	if err := F.open(); err != nil {
 		if F.Name == "" {
 			F.Name = "missing file name"
@@ -33,7 +33,7 @@ func (F *KeyFile) ReadKey() (keyContent []byte) {
 
 	defer F.fp.Close()
 
-	keyContent, err = os.ReadFile(F.Name)
+	keyContent, err := os.ReadFile(F.Name)
 	if err != nil {
 		os.Stderr.Write([]byte("Could not read file to []byte\n"))
 		os.Exit(2)

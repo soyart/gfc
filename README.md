@@ -74,7 +74,7 @@ Users have 2 ways to provide RSA keys to gfc, with files or with environment var
 
 Or
 
-    $ RSA_PUB_KEY=$(< files/pub.pem) gfc -rsa -i /tmp/myAesKey.key -o /tmp/myAesKey.out;
+    $ PUB=$(< files/pub.pem) gfc -rsa -i /tmp/myAesKey.key -o /tmp/myAesKey.out;
 
 The same is true for decryption:
 
@@ -82,7 +82,7 @@ The same is true for decryption:
 
 Or
 
-    $ RSA_PRI_KEY=$(< files/pri.pem) gfc -rsa -d -i /tmp/myAesKey.out -o /tmp/myAesKey;
+    $ PRI=$(< files/pri.pem) gfc -rsa -d -i /tmp/myAesKey.out -o /tmp/myAesKey;
 
 #### Generating RSA key pair for gfc with OpenSSL
 
@@ -156,7 +156,7 @@ These values are mainly for testing purposes
 
 - AES key file filename > `files/key.key`
 
-- RSA key file filename > None, users must supply the file names, or with environment variable `$RSA_PUB_KEY` and `$RSA_PRI_KEY`
+- RSA key file filename > None, users must supply the file names, or with environment variable `$PUB` and `$PRI`
 
 ### Command examples
 
@@ -204,7 +204,7 @@ You can combine `-stdin` and `stdout` like so:
 
 `-rsa` Use RSA encryption, with public key file `files/pub.pem`:
 
-    $ RSA_PUB_KEY=$(< files/pub.pem) gfc -rsa -i mySecretAesKey.key -o encryptedKey;
+    $ PUB=$(< files/pub.pem) gfc -rsa -i mySecretAesKey.key -o encryptedKey;
 
 `-rsa -d` Use RSA decryption, with private key file `files/pri.pem`:
 

@@ -95,9 +95,9 @@ simyn "Run test RSA on file scripts/files/aes.key with keys scripts/files/pub.pe
 && pri="./scripts/files/pri.pem"\
 && printf "Testing RSA encryption (ENV)\n"\
 && [[ -f $pub || -f $pri ]]\
-&& RSA_PUB_KEY=$(< $pub) sh -c "${gfccmd} -rsa -i "${aeskey}" -o tmp/rsaOut"\
+&& PUB=$(< $pub) sh -c "${gfccmd} -rsa -i "${aeskey}" -o tmp/rsaOut"\
 && printf "Testing RSA decryption (ENV)\n"\
-&& RSA_PRI_KEY=$(< $pri) sh -c "${gfccmd} -rsa -d -i tmp/rsaOut -o tmp/aes.key"\
+&& PRI=$(< $pri) sh -c "${gfccmd} -rsa -d -i tmp/rsaOut -o tmp/aes.key"\
 && printf "Testing equality\n"\
 && diff tmp/aes.key scripts/files/aes.key\
 && printf "✅ (ok) scripts/files match\n"\

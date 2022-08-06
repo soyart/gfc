@@ -2,42 +2,24 @@ package gfc
 
 import (
 	"bytes"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
+	"os"
 	"testing"
 )
 
 func TestRSA(t *testing.T) {
-	// Generate RSA key.
-	bitSize := 4096
-	pri, err := rsa.GenerateKey(rand.Reader, bitSize)
-	if err != nil {
-		panic(err)
-	}
-	pub := pri.Public()
+	pubFile := "./scripts/files/pub.pem"
+	priFile := "./scripts/files/pri.pem"
 
-	// Encode private key to PKCS#1 ASN.1 PEM.
-	priPKCS1 := x509.MarshalPKCS1PrivateKey(pri)
+	pubPEM, err := os.ReadFile(pubFile)
 	if err != nil {
-		t.Fatalf("failed to marshal PKIX public key: %s", err.Error())
+		t.Logf("failed to read public key file from %s", pubFile)
+		t.SkipNow()
 	}
-	priPEM := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: priPKCS1,
-		},
-	)
-
-	// Encode public key to PKCS#1 ASN.1 PEM.
-	pubPKCS1 := x509.MarshalPKCS1PublicKey(pub.(*rsa.PublicKey))
-	pubPEM := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: pubPKCS1,
-		},
-	)
+	priPEM, err := os.ReadFile(priFile)
+	if err != nil {
+		t.Logf("failed to read public key file from %s", priFile)
+		t.SkipNow()
+	}
 
 	plaintext := []byte("this_is_my_plain_text")
 	ciphertext, err := EncryptRSA(bytes.NewBuffer(plaintext), pubPEM)
@@ -129,7 +111,9 @@ jkP42gl4KwsCeDJnygxV9nueVzkSqequ5Ha1oJ3HGCYWyqYV6s5z4x1D3ro=
 	if err != nil {
 		t.Fatalf("RSA decrypt with PKIX failed: %s", err.Error())
 	}
-	if !bytes.Equal(plaintextBuf.(*bytes.Buffer).Bytes(), pri) {
+	decrypted := plaintextBuf.(*bytes.Buffer).Bytes()
+	if !bytes.Equal(decrypted, plaintext) {
+		t.Logf("plaintext: %s\ndecrypted: %s", plaintext, decrypted)
 		t.Fatal("output does not match")
 	}
 }

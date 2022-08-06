@@ -8,22 +8,25 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/artnoi43/gfc/pkg/usecase/gfc"
+	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
 // aesCommand and rsaCommand implement this interface
 type Command interface {
-	Infile() (*os.File, error)
-	Outfile() (*os.File, error)
-	Decrypt() bool
-	AlgoMode() (gfc.AlgoMode, error)
-	Encoding() gfc.Encoding
-	Key() ([]byte, error)
+	infile(isText bool) (*os.File, error)
+	isText() bool // Check if gfc gets its input from console prompt
+	outfile() (*os.File, error)
+	decrypt() bool
+	algoMode() (gfc.AlgoMode, error)
+	encoding() gfc.Encoding
+	key() ([]byte, error)
 }
 
-func infile(fname string) (*os.File, error) {
+func infile(fname string, isText bool) (*os.File, error) {
 	if fname == "" {
-		gfc.Write(os.Stdout, "Text input:\n")
+		if isText {
+			gfc.Write(os.Stdout, "Text input:\n")
+		}
 		return os.Stdin, nil
 	}
 	return os.Open(fname)
@@ -38,8 +41,13 @@ func outfile(fname string) (*os.File, error) {
 }
 
 // Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) infile() (*os.File, error) {
-	return infile(f.InfileFlag)
+func (f *baseCryptFlags) infile(isText bool) (*os.File, error) {
+	return infile(f.InfileFlag, isText)
+}
+
+// Any struct that embeds *baseCryptFlags will inherit this
+func (f *baseCryptFlags) isText() bool {
+	return f.StdinText
 }
 
 // Caller must call *os.File.Close() on their own
@@ -74,26 +82,32 @@ func (a *Args) Handle() error {
 		algo = gfc.AlgoRSA
 	}
 
-	infile, err := cmd.Infile()
+	infile, err := cmd.infile(cmd.isText())
 	if err != nil {
 		return errors.Wrapf(err, "failed to read infile")
 	}
-	key, err := cmd.Key()
+	key, err := cmd.key()
 	if err != nil {
 		return errors.Wrapf(err, "failed to read key")
 	}
-	outfile, err := cmd.Outfile()
+	outfile, err := cmd.outfile()
 	if err != nil {
 		return errors.Wrapf(err, "failed to open outfile")
 	}
-	mode, err := cmd.AlgoMode()
+	defer func() {
+		if err := outfile.Close(); err != nil {
+			gfc.Write(os.Stderr, "failed to close outfile: "+outfile.Name())
+		}
+	}()
+
+	mode, err := cmd.algoMode()
 	if err != nil {
 		return errors.Wrap(err, "invalid algorithm mode")
 	}
-	decrypt := cmd.Decrypt()
-	encoding := cmd.Encoding()
+	decrypt := cmd.decrypt()
+	encoding := cmd.encoding()
 
-	buf, err := preprocess(infile, decrypt, encoding)
+	buf, err := preProcess(infile, decrypt, encoding)
 	if err != nil {
 		return errors.Wrap(err, "input preprocessing failed")
 	}
@@ -103,7 +117,7 @@ func (a *Args) Handle() error {
 		return errors.Wrap(err, "cryptography error")
 	}
 
-	buf, err = postprocess(buf, decrypt, encoding)
+	buf, err = postProcess(buf, decrypt, encoding)
 	if err != nil {
 		return errors.Wrap(err, "output processing failed")
 	}
@@ -112,11 +126,11 @@ func (a *Args) Handle() error {
 		return errors.Wrapf(err, "failed to write to outfile %s", outfile.Name())
 	}
 
-	return outfile.Close()
+	return nil
 }
 
-// preprocess reads input from infile, closes fd of infile, and decode input if needed.
-func preprocess(infile *os.File, decrypt bool, encoding gfc.Encoding) (gfc.Buffer, error) {
+// preProcess reads input from infile, closes fd of infile, and decode input if needed.
+func preProcess(infile *os.File, decrypt bool, encoding gfc.Encoding) (gfc.Buffer, error) {
 	// Read input from a file or stdin. If from stdin, a "\n" denotes the end of the input.
 	var gfcInput gfc.Buffer = new(bytes.Buffer)
 	if infile == os.Stdin {
@@ -187,7 +201,7 @@ func cryptRSA(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.
 	return nil, errors.New("invalid RSA mode (should not happen)")
 }
 
-func postprocess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding) (gfc.Buffer, error) {
+func postProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding) (gfc.Buffer, error) {
 	if decrypt {
 		return buf, nil
 	}

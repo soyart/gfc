@@ -1,5 +1,6 @@
 package cli
 
+// baseCryptFlags represents the shared gfc CLI flags between AES and RSA subcommands.
 type baseCryptFlags struct {
 	DecryptFlag  bool   `arg:"-d,--decrypt" default:"false" help:"Decrypt mode"`
 	StdinText    bool   `arg:"-t,--text" default:"false" help:"Enter a text line manually to stdin"`

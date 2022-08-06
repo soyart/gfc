@@ -1,11 +1,12 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
-	"github.com/artnoi43/gfc/pkg/usecase/gfc"
+	"github.com/pkg/errors"
+
+	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
 type aesCommand struct {
@@ -17,20 +18,20 @@ type aesCommand struct {
 }
 
 // Caller must call *os.File.Close() on their own
-func (cmd *aesCommand) Infile() (*os.File, error) {
-	return cmd.baseCryptFlags.infile()
+func (cmd *aesCommand) infile(isText bool) (*os.File, error) {
+	return cmd.baseCryptFlags.infile(isText)
 }
 
 // Caller must call *os.File.Close() on their own
-func (cmd *aesCommand) Outfile() (*os.File, error) {
+func (cmd *aesCommand) outfile() (*os.File, error) {
 	return cmd.baseCryptFlags.outfile()
 }
 
-func (cmd *aesCommand) Decrypt() bool {
+func (cmd *aesCommand) decrypt() bool {
 	return cmd.baseCryptFlags.decrypt()
 }
 
-func (cmd *aesCommand) AlgoMode() (gfc.AlgoMode, error) {
+func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 	mode := cmd.AesMode
 	switch {
 	case strings.EqualFold(mode, "GCM"):
@@ -38,14 +39,14 @@ func (cmd *aesCommand) AlgoMode() (gfc.AlgoMode, error) {
 	case strings.EqualFold(mode, "CTR"):
 		return gfc.AES_CTR, nil
 	}
-	return gfc.InvalidAlgoMode, fmt.Errorf("unknown AES mode: %s", mode)
+	return gfc.InvalidAlgoMode, errors.New("unknown AES mode: " + mode)
 }
 
-func (cmd *aesCommand) Encoding() gfc.Encoding {
+func (cmd *aesCommand) encoding() gfc.Encoding {
 	return cmd.baseCryptFlags.encoding()
 }
 
-func (cmd *aesCommand) Key() ([]byte, error) {
+func (cmd *aesCommand) key() ([]byte, error) {
 	if cmd.AesKeyFilename == "" {
 		return nil, nil
 	}

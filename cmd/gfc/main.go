@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/alexflint/go-arg"
 
-	"github.com/artnoi43/gfc/pkg/usecase/cli"
-	"github.com/artnoi43/gfc/pkg/usecase/gfc"
+	"github.com/artnoi43/gfc/pkg/cli"
+	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
 func main() {
@@ -15,7 +14,7 @@ func main() {
 	arg.MustParse(args)
 
 	if err := args.Handle(); err != nil {
-		gfc.Write(os.Stderr, fmt.Sprintf("error: %s\n", err.Error()))
+		gfc.Write(os.Stderr, "error: "+err.Error()+"\n")
 		os.Exit(2)
 	}
 }

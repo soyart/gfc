@@ -6,7 +6,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/artnoi43/gfc/pkg/usecase/gfc"
+	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
 /* Command-line flags */

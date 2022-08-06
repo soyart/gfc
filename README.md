@@ -55,7 +55,7 @@ Passphrases will be securely hashed using PBKDF2, which added random number _sal
 
 To decrypt files encrypted with key derived from a passphrase, that same _salt_ is needed in order to convert input passphrase into the key used to encrypt it in the first place.
 
-Key and salt handling is in `pkg/usecase/gfc/key.go`.
+Key and salt handling is in `pkg/gfc/key.go`.
 
 ## Usage
 ### Defaults

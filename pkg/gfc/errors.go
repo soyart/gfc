@@ -5,45 +5,49 @@ type gfcError int
 const (
 	// Default
 	NoError gfcError = iota
+	// Error invalid keyfile length (32 bytes)
+	ErrInvalidKeyfileLen
 	// Error CTR new cipher
-	ECTRNEWCIPHER
+	ErrNewCipherCTR
 	// Error CTR in read loop
-	ECTRREAD
+	ErrReadCTR
 	// Error GCM new cipher
-	EGCMNEWCIPHER
+	ErrNewCipherGCM
 	// Error GCM new GCM
-	EGCMNEWGCM
+	ErrNewGCM
 	// Error GCM open
-	EGCMOPEN
+	ErrOpenGCM
 	// Error RSA parse pubkey
-	ERSAPARSEPUB
+	ErrParsePubRSA
 	// Error RSA encrypt
-	ERSAENCR
+	ErrEncryptRSA
 	// Error RSA pase prikey
-	ERSAPARSEPRI
+	ErrParsePriRSA
 	// Error RSA decrypt
-	ERSADECR
+	ErrDecryptRSA
 )
 
 func (err gfcError) Error() string {
 	switch err {
-	case ECTRNEWCIPHER:
+	case ErrInvalidKeyfileLen:
+		return "PBKDF2: Invalid keyfile length"
+	case ErrNewCipherCTR:
 		return "CTR: New CTR"
-	case ECTRREAD:
+	case ErrReadCTR:
 		return "CTR: Read Buffer"
-	case EGCMNEWCIPHER:
+	case ErrNewCipherGCM:
 		return "GCM: New cipher"
-	case EGCMNEWGCM:
+	case ErrNewGCM:
 		return "GCM: New GCM"
-	case EGCMOPEN:
+	case ErrOpenGCM:
 		return "GCM: Open"
-	case ERSAPARSEPUB:
+	case ErrParsePubRSA:
 		return "RSA: Parse Public Key"
-	case ERSAENCR:
+	case ErrEncryptRSA:
 		return "RSA: Encrypt"
-	case ERSAPARSEPRI:
+	case ErrParsePriRSA:
 		return "RSA: Parse Private Key"
-	case ERSADECR:
+	case ErrDecryptRSA:
 		return "RSA: Decrypt"
 	default:
 		return "bad error - should not happen"

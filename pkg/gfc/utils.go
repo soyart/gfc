@@ -9,68 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"os"
 )
-
-var (
-	b64Encoding = base64.StdEncoding
-)
-
-type File struct {
-	fp   *os.File
-	Name string
-}
-
-func (F *File) Create() *os.File {
-	fp, err := os.Create(F.Name)
-	if err != nil {
-		os.Stderr.Write([]byte("Error creating file: " + F.Name + "\n"))
-		os.Exit(1)
-	}
-	return fp
-}
-
-func (F *File) open() error {
-	var err error
-	if F.fp, err = os.Open(F.Name); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (F *File) create() error {
-	var err error
-	if F.fp, err = os.Create(F.Name); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (F *File) ReadFile() (rbuf Buffer) {
-	if err := F.open(); err != nil {
-		os.Stderr.Write([]byte(
-			"Could not open file for reading: " + F.Name + "\n"),
-		)
-		os.Exit(1)
-	}
-
-	defer F.fp.Close()
-	rbuf = new(bytes.Buffer)
-	rbuf.ReadFrom(F.fp)
-	return rbuf
-}
-
-func (F *File) WriteFile(obuf Buffer) {
-	if err := F.create(); err != nil {
-		os.Stderr.Write([]byte(
-			"Could not open file for writing: " + F.Name + "\n"),
-		)
-		os.Exit(1)
-	}
-
-	defer F.fp.Close()
-	obuf.WriteTo(F.fp)
-}
 
 func Decode(encoding Encoding, raw Buffer) (Buffer, error) {
 	var decoder io.Reader
@@ -78,7 +17,7 @@ func Decode(encoding Encoding, raw Buffer) (Buffer, error) {
 	case NoEncoding:
 		return raw, nil
 	case Base64:
-		decoder = base64.NewDecoder(b64Encoding, raw)
+		decoder = base64.NewDecoder(base64.StdEncoding, raw)
 	case Hex:
 		decoder = hex.NewDecoder(raw)
 	default:
@@ -98,7 +37,7 @@ func Encode(encoding Encoding, raw Buffer) (Buffer, error) {
 	case NoEncoding:
 		return raw, nil
 	case Base64:
-		encoder = base64.NewEncoder(b64Encoding, encoded)
+		encoder = base64.NewEncoder(base64.StdEncoding, encoded)
 		// Base64 encodings operate in 4-byte blocks; when finished writing,
 		// the caller must Close the returned encoder to flush any partially written blocks.
 		defer encoder.(io.WriteCloser).Close()

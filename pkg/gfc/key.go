@@ -15,31 +15,8 @@ import (
 const (
 	rounds     int = 1 << 20 // PBKDF2 rounds
 	lenSalt    int = 32
-	lenKeyFile int = 32
+	keyFileLen int = 32
 )
-
-type KeyFile struct {
-	File
-}
-
-func (F *KeyFile) ReadKey() []byte {
-	if err := F.open(); err != nil {
-		if F.Name == "" {
-			F.Name = "missing file name"
-		}
-		os.Stderr.Write([]byte("Could not open key file for reading: " + (F.Name) + "\n"))
-		os.Exit(1)
-	}
-
-	defer F.fp.Close()
-
-	keyContent, err := os.ReadFile(F.Name)
-	if err != nil {
-		os.Stderr.Write([]byte("Could not read file to []byte\n"))
-		os.Exit(2)
-	}
-	return keyContent
-}
 
 func getPass() []byte {
 	os.Stdout.Write([]byte("Passphrase (will not echo)\n"))
@@ -58,24 +35,22 @@ func genKeySalt(passphrase []byte, salt []byte) ([]byte, []byte) {
 
 // If AES key is nil, getPass() is called to get passphrase from user.
 // If salt is nil, new salt is created.
-func getKeySalt(aesKey []byte, salt []byte) ([]byte, []byte) {
+func getKeySalt(aesKey []byte, salt []byte) ([]byte, []byte, error) {
 	if aesKey == nil {
-		/* Passphrase */
+		// Passphrase
 		key, salt := genKeySalt(getPass(), salt)
-		return key, salt
+		return key, salt, nil
 
 	} else {
-		/* Keyfile */
-		switch len(aesKey) {
-		case lenKeyFile:
-			if salt == nil {
-				salt = make([]byte, lenSalt)
-				rand.Read(salt)
-			}
-		default:
-			os.Stderr.Write([]byte("Invalid key length\n"))
-			os.Exit(1)
+		keyLen := len(aesKey)
+		if keyLen != keyFileLen {
+			return nil, nil, ErrInvalidKeyfileLen
 		}
-		return aesKey, salt
+		// If salt is new (encryption), generate new salt
+		if salt == nil {
+			salt = make([]byte, lenSalt)
+			rand.Read(salt)
+		}
+		return aesKey, salt, nil
 	}
 }

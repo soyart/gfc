@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	rounds     int = 1 << 20 // PBKDF2 rounds
-	lenSalt    int = 32
-	keyFileLen int = 32
+	pbkdf2Rounds  int = 1 << 20 // PBKDF2 pbkdf2Rounds
+	lenPBKDF2Salt int = 32
+	keyFileLen    int = 32
 )
 
 func getPass() []byte {
@@ -24,21 +24,26 @@ func getPass() []byte {
 	return passphrase
 }
 
-/* Derive 256-bit key and salt using PBKDF2 */
-func genKeySalt(passphrase []byte, salt []byte) ([]byte, []byte) {
+func generateSaltPBKDF2(salt []byte) []byte {
 	if salt == nil {
-		salt = make([]byte, lenSalt)
+		salt = make([]byte, lenPBKDF2Salt)
 		rand.Read(salt)
 	}
-	return pbkdf2.Key(passphrase, salt, rounds, lenSalt, sha256.New), salt
+	return salt
+}
+
+/* Derive 256-bit key and salt using PBKDF2 */
+func generateKeySaltPBKDF2(passphrase []byte, salt []byte) ([]byte, []byte) {
+	salt = generateSaltPBKDF2(salt)
+	return pbkdf2.Key(passphrase, salt, pbkdf2Rounds, lenPBKDF2Salt, sha256.New), salt
 }
 
 // If AES key is nil, getPass() is called to get passphrase from user.
 // If salt is nil, new salt is created.
-func getKeySalt(aesKey []byte, salt []byte) ([]byte, []byte, error) {
+func keySaltPBKDF2(aesKey []byte, salt []byte) ([]byte, []byte, error) {
 	if aesKey == nil {
 		// Passphrase
-		key, salt := genKeySalt(getPass(), salt)
+		key, salt := generateKeySaltPBKDF2(getPass(), salt)
 		return key, salt, nil
 
 	} else {
@@ -47,10 +52,7 @@ func getKeySalt(aesKey []byte, salt []byte) ([]byte, []byte, error) {
 			return nil, nil, ErrInvalidKeyfileLen
 		}
 		// If salt is new (encryption), generate new salt
-		if salt == nil {
-			salt = make([]byte, lenSalt)
-			rand.Read(salt)
-		}
+		salt = generateSaltPBKDF2(salt)
 		return aesKey, salt, nil
 	}
 }

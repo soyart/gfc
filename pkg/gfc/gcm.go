@@ -15,12 +15,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	lenNonceGCM int = 12 // 96-bit nonce
-)
-
 func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
-	key, salt, err := getKeySalt(aesKey, nil)
+	key, salt, err := keySaltPBKDF2(aesKey, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "key and salt error for PBKDF2 in AES-GCM encryption")
 	}
@@ -64,9 +60,9 @@ func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 	}
 
 	lenGfcCiphertext := len(ciphertextBytes)
-	saltStart := lenGfcCiphertext - lenSalt
+	saltStart := lenGfcCiphertext - lenPBKDF2Salt
 	salt := ciphertextBytes[saltStart:]
-	key, _, err := getKeySalt(aesKey, salt)
+	key, _, err := keySaltPBKDF2(aesKey, salt)
 	if err != nil {
 		return nil, errors.Wrap(err, "key and salt error for PBKDF2 in AES-GCM decryption")
 	}

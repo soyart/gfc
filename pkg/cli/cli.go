@@ -96,7 +96,7 @@ func (a *Args) Handle() error {
 	}
 	defer func() {
 		if err := outfile.Close(); err != nil {
-			gfc.Write(os.Stderr, "failed to close outfile: "+outfile.Name())
+			gfc.Write(os.Stderr, "failed to close outfile: "+outfile.Name()+"\n")
 		}
 	}()
 

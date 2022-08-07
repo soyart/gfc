@@ -2,6 +2,8 @@
 
 gfc is my first programming project, written the first day I learned Go. I intend to learn Go from its development, so expect some bad code.
 
+gfc is a minimal encryption CLI tool designed to be versatile and easy to use. This package provides an executable (`cmd/gfc`), and a library (`pkg/gfc`) providing high-level wrapper for AES256-GCM, AES256-CTR, and RSA256-OEAP.
+
 Users can use gfc to encrypt archives before sending it to remote backup locations (i.e. cloud storage), which is my use case. Because gfc now supports asymmetric encryption, users can also exchange files safely with RSA-encrypted AES key files. Users can also use hexadecimal or Base64 mode to exchange secret messages easily (e.g. copying [WireGuard](/blog/2020/wireguard/) keys over Facebook messenger).
 
 ## Features

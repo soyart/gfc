@@ -1,26 +1,41 @@
-#!/bin/bash
-tarballe="/tmp/$1.zstd.tar";
-tarballd="$2.zstd.tar";
-gfcout="$tarballe.gfc.out";
+#!/usr/bin/env bash
 
-# tar and encrypt
-if [ "$1" != '-d' ];
+# rgfc.sh -e mydir mydir.bin # Encryption
+# rgfc.sh -d mydir.bin # Decryption -> will output mydir dir
+
+TAR_VERSION="$(tar --version)";
+printf "tar version: %s\n" "${TAR_VERSION}";
+
+if [[ $TAR_VERSION == "bsdtar"* ]];
 then
-	if [ -d "$1" ];
-	then
-		# GNU tar only, for BSD tar, use -cJf instead (xz)
-		tar --zstd -cf "$tarballe" "$1"\
-		&& gfc -i "$tarballe" -o "$gfcout"\
-		&& rm -v "$tarballe"\
-		&& printf "Wrote to $gfcout\n"
-	else
-		printf "error: Expecting directory\nIf you are decrypting a file, use -d flag";
-	fi;
-elif [ -n "$2" ];
-then
-# untar and decrypt
-	printf "%s\n" "Will decrypt and untar {$2} in $(pwd)"
-	gfc -d -i "$2" -o $tarballd\
-	&& tar -xf "$tarballd"\
-	&& rm -v $tarballd;
-fi
+	TAR_CMD="tar -cJf"
+	TARBALL_EXT=".tar.xz"
+	UNTAR_CMD="tar -xJf"
+else
+	TAR_CMD="tar --zstd -cf"
+	TARBALL_EXT=".tar.zst"
+	UNTAR_CMD="tar -xf"
+fi;
+
+printf "tar command: %s\n" "${TAR_CMD}";
+printf "un-tar command: %s\n" "${UNTAR_CMD}";
+
+case "${1}" in
+	"-e")
+		INDIR="$2";
+		OUTTARBIN="$3";
+		TARBALL_COMPRESSED="${INDIR}${TARBALL_EXT}";
+		# tar the dir first
+		sh -c "${TAR_CMD} ${TARBALL_COMPRESSED} ${INDIR};"\
+		&& sh -c "gfc aes -i ${TARBALL_COMPRESSED} -o ${OUTTARBIN};"\
+		&& sh -c "rm ${TARBALL_COMPRESSED};";
+	;;
+
+	"-d")
+		INTARBIN="$2";
+		DECRYPTED_TARBALL="${INTARBIN}.decrypted${TARBALL_EXT}"
+		sh -c "gfc aes -d -i ${INTARBIN} -o ${DECRYPTED_TARBALL};"\
+		&& sh -c "${UNTAR_CMD} ${DECRYPTED_TARBALL};"\
+		&& sh -c "rm ${DECRYPTED_TARBALL};";
+	;;
+esac;

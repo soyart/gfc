@@ -6,5 +6,5 @@ function copyfile() {
 
 [  -f gfc ]\
 && copyfile\
-|| go build -o gfc ./cmd/main.go\
+|| go build -o gfc ./cmd/gfc\
 && copyfile;

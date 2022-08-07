@@ -29,7 +29,7 @@ func EncryptRSA(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r error) {
 		if err != nil {
 			os.Stderr.Write([]byte("Failed to parse public key\n"))
 			r = ERSAPARSEPUB
-			return nil, errors.Wrap(r, err.Error())
+			return nil, errors.Wrap(err, r.Error())
 		}
 	} else {
 		pub = pubInterface.(*rsa.PublicKey)
@@ -45,7 +45,7 @@ func EncryptRSA(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r error) {
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to encrypt string: " + err.Error() + "\n"))
 		r = ERSAENCR
-		return nil, errors.Wrap(r, err.Error())
+		return nil, errors.Wrap(err, r.Error())
 	}
 	ciphertext = bytes.NewBuffer(ciphertextRaw)
 	return ciphertext, nil
@@ -57,7 +57,7 @@ func DecryptRSA(ciphertext Buffer, priKey []byte) (plaintext Buffer, r error) {
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to parse private key: " + err.Error() + "\n"))
 		r = ERSAPARSEPRI
-		return nil, errors.Wrap(r, err.Error())
+		return nil, errors.Wrap(err, r.Error())
 	}
 
 	var ciphertextBytes []byte
@@ -70,7 +70,7 @@ func DecryptRSA(ciphertext Buffer, priKey []byte) (plaintext Buffer, r error) {
 	if err != nil {
 		os.Stderr.Write([]byte("Failed to decrypt string\n"))
 		r = ERSADECR
-		return nil, errors.Wrap(r, err.Error())
+		return nil, errors.Wrap(err, r.Error())
 	}
 	plaintext = bytes.NewBuffer(plaintextRaw)
 	return plaintext, nil

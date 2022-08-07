@@ -136,7 +136,7 @@ RSA keyfiles can be specified in 2 ways - with environment variable or as a full
 
 ## Encrypting a directory
 
-> Bash script `rgfc.sh` can be used to perform this task. Usage is simple; `$ rgfc.sh <dir>` will first create temporary tarball from `<dir>`, and encrpyts the tarball. If the encryption is successful, the unencrypted tarball is removed.
+> Bash script `rgfc.sh` can be used to perform this task. Usage is simple; `$ rgfc.sh <dir> <outfile>` will first create temporary tarball from `<dir>`, and encrpyts the tarball. If the encryption is successful, the unencrypted tarball is removed.
 
 gfc does not recursively encrypt/decrypt files - that would add needless complexity. If you are encrypting a directory (folder), use `tar(1)` to archive (and optionally compress) the directory, and use gfc to encrypt that tarball.
 
@@ -155,7 +155,7 @@ Or with xz compression:
 
 ## Testing gfc
 
-A Bash script `test.sh` and `test-gfc-og.sh` is shipped with gfc and can be use to test a combination of commands.
+In addition to unit tests, Bash scripts `test.sh` and `test-gfc-og.sh` are shipped with gfc and can be use to test a combination of commands.
 
 ## Known issues for gfc-og
 

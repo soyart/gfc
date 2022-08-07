@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	lenNonce int = 12 // use 96-bit nonce
+	lenNonceGCM int = 12 // 96-bit nonce
 )
 
 func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
@@ -34,7 +34,7 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		return nil, errors.Wrap(err, ErrNewGCM.Error())
 	}
 
-	nonce := make([]byte, lenNonce)
+	nonce := make([]byte, lenNonceGCM)
 	rand.Read(nonce)
 
 	var plaintextBytes []byte
@@ -63,14 +63,16 @@ func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 		ciphertextBytes = ciphertext.Bytes()
 	}
 
-	lenData := len(ciphertextBytes)
-	salt := ciphertextBytes[lenData-lenSalt:]
+	lenGfcCiphertext := len(ciphertextBytes)
+	saltStart := lenGfcCiphertext - lenSalt
+	salt := ciphertextBytes[saltStart:]
 	key, _, err := getKeySalt(aesKey, salt)
 	if err != nil {
 		return nil, errors.Wrap(err, "key and salt error for PBKDF2 in AES-GCM decryption")
 	}
-	nonce := ciphertextBytes[lenData-lenNonce-lenSalt : lenData-lenSalt]
-	ciphertextBytes = ciphertextBytes[:lenData-lenNonce-lenSalt]
+	nonceStart := saltStart - lenNonceGCM
+	nonce := ciphertextBytes[nonceStart:saltStart]
+	ciphertextBytes = ciphertextBytes[:nonceStart]
 
 	block, err := aes.NewCipher(key)
 	if err != nil {

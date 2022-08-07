@@ -28,6 +28,7 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		return nil, errors.Wrap(err, ErrNewCipherCTR.Error())
 	}
 
+	// blockSize is 16
 	iv := make([]byte, block.BlockSize())
 	rand.Read(iv)
 
@@ -57,14 +58,15 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 }
 
 func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	var data []byte
+	var ciphertextBytes []byte
 	switch ciphertext := ciphertext.(type) {
 	case *bytes.Buffer:
-		data = ciphertext.Bytes()
+		ciphertextBytes = ciphertext.Bytes()
 	}
-	lenData := len(data)
+	lenGfcCiphertext := len(ciphertextBytes)
 
-	salt := data[lenData-lenSalt:]
+	saltStart := lenGfcCiphertext - lenSalt
+	salt := ciphertextBytes[saltStart:]
 	key, _, err := getKeySalt(aesKey, salt)
 	if err != nil {
 		return nil, errors.Wrap(err, "error new key and salt for PBKDF2 in AES-CTR decryption")
@@ -74,10 +76,12 @@ func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 		return nil, errors.Wrap(err, ErrNewCipherCTR.Error())
 	}
 
+	// blockSize is 16
 	lenIV := block.BlockSize()
-	iv := data[lenData-lenIV-lenSalt : lenData-lenSalt]
-	lenMsg := lenData - lenIV - lenSalt
+	ivStart := saltStart - lenIV
+	iv := ciphertextBytes[ivStart:saltStart]
 
+	lenMsg := ivStart
 	stream := cipher.NewCTR(block, iv)
 	buf := make([]byte, 1024)
 	plaintext := new(bytes.Buffer)

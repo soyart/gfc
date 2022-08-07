@@ -10,7 +10,6 @@ import (
 	"crypto/sha512"
 	"crypto/x509"
 	"encoding/pem"
-	"os"
 
 	"github.com/pkg/errors"
 )
@@ -20,16 +19,14 @@ var (
 	salt = rand.Reader
 )
 
-func EncryptRSA(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r error) {
+func EncryptRSA(plaintext Buffer, pubKey []byte) (Buffer, error) {
 	block, _ := pem.Decode([]byte(pubKey))
 	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 	var pub *rsa.PublicKey
 	if err != nil {
 		pub, err = x509.ParsePKCS1PublicKey(block.Bytes)
 		if err != nil {
-			os.Stderr.Write([]byte("Failed to parse public key\n"))
-			r = ERSAPARSEPUB
-			return nil, errors.Wrap(err, r.Error())
+			return nil, errors.Wrap(err, ErrParsePubRSA.Error())
 		}
 	} else {
 		pub = pubInterface.(*rsa.PublicKey)
@@ -43,21 +40,17 @@ func EncryptRSA(plaintext Buffer, pubKey []byte) (ciphertext Buffer, r error) {
 
 	ciphertextRaw, err := rsa.EncryptOAEP(hash, salt, pub, plaintextBytes, nil)
 	if err != nil {
-		os.Stderr.Write([]byte("Failed to encrypt string: " + err.Error() + "\n"))
-		r = ERSAENCR
-		return nil, errors.Wrap(err, r.Error())
+		return nil, errors.Wrap(err, ErrEncryptRSA.Error())
 	}
-	ciphertext = bytes.NewBuffer(ciphertextRaw)
+	ciphertext := bytes.NewBuffer(ciphertextRaw)
 	return ciphertext, nil
 }
 
-func DecryptRSA(ciphertext Buffer, priKey []byte) (plaintext Buffer, r error) {
+func DecryptRSA(ciphertext Buffer, priKey []byte) (Buffer, error) {
 	block, _ := pem.Decode([]byte(priKey))
 	pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		os.Stderr.Write([]byte("Failed to parse private key: " + err.Error() + "\n"))
-		r = ERSAPARSEPRI
-		return nil, errors.Wrap(err, r.Error())
+		return nil, errors.Wrap(err, ErrParsePriRSA.Error())
 	}
 
 	var ciphertextBytes []byte
@@ -68,10 +61,8 @@ func DecryptRSA(ciphertext Buffer, priKey []byte) (plaintext Buffer, r error) {
 
 	plaintextRaw, err := rsa.DecryptOAEP(hash, salt, pri, ciphertextBytes, nil)
 	if err != nil {
-		os.Stderr.Write([]byte("Failed to decrypt string\n"))
-		r = ERSADECR
-		return nil, errors.Wrap(err, r.Error())
+		return nil, errors.Wrap(err, ErrDecryptRSA.Error())
 	}
-	plaintext = bytes.NewBuffer(plaintextRaw)
+	plaintext := bytes.NewBuffer(plaintextRaw)
 	return plaintext, nil
 }

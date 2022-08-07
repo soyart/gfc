@@ -7,7 +7,7 @@ import (
 )
 
 func TestCTR(t *testing.T) {
-	key := make([]byte, lenKeyFile)
+	key := make([]byte, keyFileLen)
 	_, err := rand.Read(key)
 	if err != nil {
 		t.Fatalf("error filling key bytes: %s", err.Error())

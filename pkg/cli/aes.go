@@ -17,20 +17,6 @@ type aesCommand struct {
 	AesKeyFileBytes []byte `arg:"-"`
 }
 
-// Caller must call *os.File.Close() on their own
-func (cmd *aesCommand) infile(isText bool) (*os.File, error) {
-	return cmd.baseCryptFlags.infile(isText)
-}
-
-// Caller must call *os.File.Close() on their own
-func (cmd *aesCommand) outfile() (*os.File, error) {
-	return cmd.baseCryptFlags.outfile()
-}
-
-func (cmd *aesCommand) decrypt() bool {
-	return cmd.baseCryptFlags.decrypt()
-}
-
 func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 	mode := cmd.AesMode
 	switch {
@@ -40,10 +26,6 @@ func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 		return gfc.AES_CTR, nil
 	}
 	return gfc.InvalidAlgoMode, errors.New("unknown AES mode: " + mode)
-}
-
-func (cmd *aesCommand) encoding() gfc.Encoding {
-	return cmd.baseCryptFlags.encoding()
 }
 
 func (cmd *aesCommand) key() ([]byte, error) {

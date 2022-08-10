@@ -13,7 +13,7 @@ type baseCryptFlags struct {
 	StdinText    bool   `arg:"-t,--text" default:"false" help:"Enter a text line manually to stdin"`
 	CompressFlag bool   `arg:"-c,--compress" default:"false" help:"Use ZSTD compression"`
 	InfileFlag   string `arg:"-i,--infile" placeholder:"IN" help:"Input filename, stdin will be used if omitted"`
-	EncodingFlag string `arg:"-e,--encode" placeholder:"ENC" help:"'base64' or 'hex' encoding for input or output"`
+	EncodingFlag string `arg:"-e,--encoding" placeholder:"ENC" help:"'base64' or 'hex' encoding for input or output"`
 	OutfileFlag  string `arg:"-o,--outfile" placeholder:"OUT" help:"Output filename, stdout will be used if omitted"`
 }
 
@@ -41,8 +41,8 @@ func outfile(fname string) (*os.File, error) {
 }
 
 // Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) infile(isText bool) (*os.File, error) {
-	return infile(f.InfileFlag, isText)
+func (f *baseCryptFlags) infile() (*os.File, error) {
+	return infile(f.InfileFlag, f.isText())
 }
 
 // Any struct that embeds *baseCryptFlags will inherit this

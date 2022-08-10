@@ -14,6 +14,8 @@ Users can use gfc to encrypt archives before sending it to remote backup locatio
 
 - PBKDF2 passphrase hash derivation
 
+- ZSTD compression
+
 - Hexadecimal or Base64 output
 
 - Reads from files or stdin, and writes to files or stdout
@@ -27,8 +29,7 @@ The AES part of the code was first copied from [this source](https://levelup.git
 
 Build `gfc` executable from source with `go build`:
 
-    $ go build cmd/gfc       # gfc-ng
-    $ go build cmd/gfc-og;   # gfc classic
+    $ go build cmd/gfc       # gfc
 
 ## Generating gfc encryption keys
 #### Generating AES keys for gfc
@@ -100,10 +101,17 @@ There're 2 ways to use stdin input - piping and by entering text manually.
     $ # The output is written to ./text.bin
     $ gfc aes --text -o text.bin;
 
+#### Pre-encryption and post-encryption
+##### Encoding
 We can also apply some encoding to our output (encryption) or input (decryption) with `-e <ENCODING>` or `--encode <ENCODING>`:
 
     $ # The first execution spits hex-encoded output to the other execution, which expects it
-    $ gfc aes -i plain.txt -k mykey -e hex | gfc aes -d -k mykey -e hex;
+    $ gfc aes -i plain.txt -k mykey --encoding hex | gfc aes -d -k mykey --encoding hex;
+
+##### Compression
+Similar to encoding, we can enable ZSTD compression with flag `-c` or `--compress`. The example below combines ZSTD compression with hex encoding:
+
+    $ gfc aes --compress -i plain.txt -k mykey -e hex | gfc aes --compress -d -k mykey -e hex;
 
 #### Encryption key
 ##### AES
@@ -198,6 +206,10 @@ imported for [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) key derivation funct
 - `github.com/alexflint/go-arg`
 
 imported for CLI argument handling
+
+- `github.com/klauspost/compress`
+
+imported for ZSTD compression
 
 ## License
 

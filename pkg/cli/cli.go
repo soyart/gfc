@@ -3,8 +3,8 @@ package cli
 import (
 	"bufio"
 	"bytes"
+	"io"
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -14,64 +14,17 @@ import (
 // aesCommand and rsaCommand implement this interface
 type Command interface {
 	infile(isText bool) (*os.File, error)
-	isText() bool // Check if gfc gets its input from console prompt
 	outfile() (*os.File, error)
 	decrypt() bool
+	isText() bool // Check if gfc gets its input from console prompt
+	compression() bool
 	algoMode() (gfc.AlgoMode, error)
 	encoding() gfc.Encoding
 	key() ([]byte, error)
 }
 
-func infile(fname string, isText bool) (*os.File, error) {
-	if fname == "" {
-		if isText {
-			gfc.Write(os.Stdout, "Text input:\n")
-		}
-		return os.Stdin, nil
-	}
-	return os.Open(fname)
-}
-
-func outfile(fname string) (*os.File, error) {
-	if fname == "" {
-		return os.Stdout, nil
-	}
-
-	return os.Create(fname)
-}
-
-// Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) infile(isText bool) (*os.File, error) {
-	return infile(f.InfileFlag, isText)
-}
-
-// Any struct that embeds *baseCryptFlags will inherit this
-func (f *baseCryptFlags) isText() bool {
-	return f.StdinText
-}
-
-// Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) outfile() (*os.File, error) {
-	return outfile(f.OutfileFlag)
-}
-
-func (f *baseCryptFlags) decrypt() bool {
-	return f.DecryptFlag
-}
-
-func (f *baseCryptFlags) encoding() gfc.Encoding {
-	encoding := f.EncodingFlag
-	if strings.EqualFold(encoding, "B64") || strings.EqualFold(encoding, "BASE64") {
-		return gfc.Base64
-	} else if strings.EqualFold(encoding, "H") || strings.EqualFold(encoding, "HEX") {
-		return gfc.Hex
-	}
-	return gfc.NoEncoding
-}
-
 func (a *Args) Handle() error {
 	var cmd Command
-	// g := &goFileCrypt{}
 	var algo gfc.Algorithm
 	switch {
 	case a.AESCommand != nil:
@@ -82,7 +35,8 @@ func (a *Args) Handle() error {
 		algo = gfc.AlgoRSA
 	}
 
-	infile, err := cmd.infile(cmd.isText())
+	isTextInput := cmd.isText()
+	infile, err := cmd.infile(isTextInput)
 	if err != nil {
 		return errors.Wrapf(err, "failed to read infile")
 	}
@@ -94,11 +48,20 @@ func (a *Args) Handle() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to open outfile")
 	}
+	closeOutfile := func() {
+		if outfile != os.Stdout {
+			if err := outfile.Close(); err != nil {
+				gfc.Write(os.Stderr, "failed to close outfile: "+outfile.Name()+"\n")
+			}
+		}
+	}
 	defer func() {
-		if err := outfile.Close(); err != nil {
-			gfc.Write(os.Stderr, "failed to close outfile: "+outfile.Name()+"\n")
+		if r := recover(); r != nil {
+			gfc.Write(os.Stderr, "panic recovered\n")
+			closeOutfile()
 		}
 	}()
+	defer closeOutfile()
 
 	mode, err := cmd.algoMode()
 	if err != nil {
@@ -106,8 +69,14 @@ func (a *Args) Handle() error {
 	}
 	decrypt := cmd.decrypt()
 	encoding := cmd.encoding()
+	compress := cmd.compression()
 
-	buf, err := preProcess(infile, decrypt, encoding)
+	buf, err := readInput(infile, isTextInput)
+	if err != nil {
+		return errors.Wrap(err, "failed to read input")
+	}
+
+	buf, err = preProcess(buf, decrypt, encoding, compress)
 	if err != nil {
 		return errors.Wrap(err, "input preprocessing failed")
 	}
@@ -117,7 +86,7 @@ func (a *Args) Handle() error {
 		return errors.Wrap(err, "cryptography error")
 	}
 
-	buf, err = postProcess(buf, decrypt, encoding)
+	buf, err = postProcess(buf, decrypt, encoding, compress)
 	if err != nil {
 		return errors.Wrap(err, "output processing failed")
 	}
@@ -129,14 +98,25 @@ func (a *Args) Handle() error {
 	return nil
 }
 
-// preProcess reads input from infile, closes fd of infile, and decode input if needed.
-func preProcess(infile *os.File, decrypt bool, encoding gfc.Encoding) (gfc.Buffer, error) {
+func readInput(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 	// Read input from a file or stdin. If from stdin, a "\n" denotes the end of the input.
 	var gfcInput gfc.Buffer = new(bytes.Buffer)
 	if infile == os.Stdin {
-		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		gfcInput = bytes.NewBuffer([]byte(scanner.Text()))
+		if isTextInput {
+			// Read 1 line from stdin
+			scanner := bufio.NewScanner(infile)
+			scanner.Scan()
+			gfcInput = bytes.NewBuffer(scanner.Bytes())
+		} else {
+			// Read whole stdin input
+			for {
+				stdinBuf := make([]byte, 1024)
+				if _, err := infile.Read(stdinBuf); err == io.EOF {
+					break
+				}
+				gfcInput = bytes.NewBuffer(stdinBuf)
+			}
+		}
 	} else {
 		_, err := gfcInput.ReadFrom(infile)
 		if err != nil {
@@ -152,22 +132,34 @@ func preProcess(infile *os.File, decrypt bool, encoding gfc.Encoding) (gfc.Buffe
 		}
 	}
 
-	var err error
-	if decrypt {
-		gfcInput, err = gfc.Decode(encoding, gfcInput)
-		if err != nil {
-			return nil, errors.Wrap(err, "decoding failed")
-		}
-	}
 	return gfcInput, nil
 }
 
-func crypt(input gfc.Buffer, key []byte, decrypt bool, algo gfc.Algorithm, mode gfc.AlgoMode) (gfc.Buffer, error) {
+// preProcess creates and modifies the input buffer before encryption/decryption stage.
+func preProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding, compress bool) (gfc.Buffer, error) {
+	var err error
+	if decrypt {
+		// Decryption may need to decide encoded input
+		buf, err = gfc.Decode(encoding, buf)
+		if err != nil {
+			return nil, errors.Wrap(err, "decoding failed")
+		}
+	} else {
+		// Encryption may need to compress input
+		buf, err = gfc.Compress(compress, buf)
+		if err != nil {
+			return nil, errors.Wrap(err, "compression failed")
+		}
+	}
+	return buf, nil
+}
+
+func crypt(buf gfc.Buffer, key []byte, decrypt bool, algo gfc.Algorithm, mode gfc.AlgoMode) (gfc.Buffer, error) {
 	switch algo {
 	case gfc.AlgoAES:
-		return cryptAES(input, key, decrypt, mode)
+		return cryptAES(buf, key, decrypt, mode)
 	case gfc.AlgoRSA:
-		return cryptRSA(input, key, decrypt, mode)
+		return cryptRSA(buf, key, decrypt, mode)
 	}
 	return nil, errors.New("invalid crypto algorithm")
 }
@@ -201,9 +193,10 @@ func cryptRSA(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.
 	return nil, errors.New("invalid RSA mode (should not happen)")
 }
 
-func postProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding) (gfc.Buffer, error) {
+// postProcess modifies the output buffer after encryption/decryption stage before gfc writes it out to outfile
+func postProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding, compress bool) (gfc.Buffer, error) {
 	if decrypt {
-		return buf, nil
+		return gfc.Decompress(compress, buf)
 	}
 	return gfc.Encode(encoding, buf)
 }

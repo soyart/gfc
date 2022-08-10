@@ -18,7 +18,7 @@ const (
 	keyFileLen    int = 32
 )
 
-func getPass() []byte {
+func getPassphrase() []byte {
 	os.Stdout.Write([]byte("Passphrase (will not echo)\n"))
 	passphrase, _ := term.ReadPassword(0)
 	return passphrase
@@ -41,18 +41,17 @@ func generateKeySaltPBKDF2(passphrase []byte, salt []byte) ([]byte, []byte) {
 // If AES key is nil, getPass() is called to get passphrase from user.
 // If salt is nil, new salt is created.
 func keySaltPBKDF2(aesKey []byte, salt []byte) ([]byte, []byte, error) {
-	if aesKey == nil {
-		// Passphrase
-		key, salt := generateKeySaltPBKDF2(getPass(), salt)
-		return key, salt, nil
-
-	} else {
+	var baseKey []byte
+	if aesKey != nil {
 		keyLen := len(aesKey)
 		if keyLen != keyFileLen {
 			return nil, nil, ErrInvalidKeyfileLen
 		}
-		// If salt is new (encryption), generate new salt
-		salt = generateSaltPBKDF2(salt)
-		return aesKey, salt, nil
+		baseKey = aesKey
+	} else {
+		baseKey = getPassphrase()
 	}
+
+	key, salt := generateKeySaltPBKDF2(baseKey, salt)
+	return key, salt, nil
 }

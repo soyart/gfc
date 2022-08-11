@@ -36,7 +36,7 @@ Build `gfc` executable from source with `go build`:
 
 To generate a new AES key, I usually use `dd(1)` write 32 bytes of random character to a file:
 
-    $ dd if=/dev/random of=scripts/files/aes.key bs=32 count=1;
+    $ dd if=/dev/random of=assets/files/aes.key bs=32 count=1;
 
 I'm too lazy to add deterministic keyfile hasher, so gfc will assume that the key is well randomized and can be used right away without PBKDF2 or SHA256 hash.
 
@@ -103,7 +103,7 @@ There're 2 ways to use stdin input - piping and by entering text manually.
 
 #### Pre-encryption and post-encryption
 ##### Encoding
-We can also apply some encoding to our output (encryption) or input (decryption) with `-e <ENCODING>` or `--encode <ENCODING>`:
+We can also apply some encoding to our output (encryption) or input (decryption) with `-e <ENCODING>` or `--encoding <ENCODING>`:
 
     $ # The first execution spits hex-encoded output to the other execution, which expects it
     $ gfc aes -i plain.txt -k mykey --encoding hex | gfc aes -d -k mykey --encoding hex;
@@ -165,7 +165,7 @@ Or with xz compression:
 
 ## Testing gfc
 
-In addition to unit tests, Bash scripts `test.sh` and `test-gfc-og.sh` are shipped with gfc and can be use to test a combination of commands.
+In addition to unit tests, Bash scripts `gfc_cli_test.sh` and `gfc_og_test.sh` are shipped with gfc and can be use to test a combination of commands.
 
 ## Known issues for gfc-og
 

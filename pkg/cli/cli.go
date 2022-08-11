@@ -13,7 +13,7 @@ import (
 
 // aesCommand and rsaCommand implement this interface
 type Command interface {
-	infile(isText bool) (*os.File, error)
+	infile() (*os.File, error)
 	outfile() (*os.File, error)
 	decrypt() bool
 	isText() bool // Check if gfc gets its input from console prompt
@@ -36,7 +36,8 @@ func (a *Args) Handle() error {
 	}
 
 	isTextInput := cmd.isText()
-	infile, err := cmd.infile(isTextInput)
+	// infile is closed by readInput
+	infile, err := cmd.infile()
 	if err != nil {
 		return errors.Wrapf(err, "failed to read infile")
 	}
@@ -44,6 +45,7 @@ func (a *Args) Handle() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to read key")
 	}
+	// outfile is closed in this function after writing to it by using defer statement.
 	outfile, err := cmd.outfile()
 	if err != nil {
 		return errors.Wrapf(err, "failed to open outfile")
@@ -98,6 +100,7 @@ func (a *Args) Handle() error {
 	return nil
 }
 
+// readInput does not use os.ReadFile to read infile, so we must close infile manually.
 func readInput(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 	// Read input from a file or stdin. If from stdin, a "\n" denotes the end of the input.
 	var gfcInput gfc.Buffer = new(bytes.Buffer)
@@ -154,6 +157,7 @@ func preProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding, compress bo
 	return buf, nil
 }
 
+// crypt wraps cryptAES and cryptRSA
 func crypt(buf gfc.Buffer, key []byte, decrypt bool, algo gfc.Algorithm, mode gfc.AlgoMode) (gfc.Buffer, error) {
 	switch algo {
 	case gfc.AlgoAES:

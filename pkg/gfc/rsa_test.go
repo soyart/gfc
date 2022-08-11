@@ -7,8 +7,8 @@ import (
 )
 
 func TestRSA(t *testing.T) {
-	pubFile := "./scripts/files/pub.pem"
-	priFile := "./scripts/files/pri.pem"
+	pubFile := "./assets/files/pub.pem"
+	priFile := "./assets/files/pri.pem"
 
 	pubPEM, err := os.ReadFile(pubFile)
 	if err != nil {

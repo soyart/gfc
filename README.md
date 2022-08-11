@@ -4,8 +4,7 @@ gfc is my first programming project, written the first day I learned Go. I inten
 
 gfc is a minimal encryption CLI tool designed to be versatile and easy to use. This package provides an executable (`cmd/gfc`), and a library (`pkg/gfc`) providing high-level wrapper for AES256-GCM, AES256-CTR, and RSA256-OEAP.
 
-Users can use gfc to encrypt archives before sending it to remote backup locations (i.e. cloud storage), which is my use case. Because gfc now supports asymmetric encryption, users can also exchange files safely with RSA-encrypted AES key files. Users can also use hexadecimal or Base64 mode to exchange secret messages easily (e.g. copying [WireGuard](/blog/2020/wireguard/) keys over Facebook messenger).
-
+gfc can encrypt any files which the user has read access to (except for RSA, which can only encrypt a small messages), as well as stdin.
 ## Features
 
 - AES256-GCM and AES256-CTR encryption/decryption
@@ -29,7 +28,8 @@ The AES part of the code was first copied from [this source](https://levelup.git
 
 Build `gfc` executable from source with `go build`:
 
-    $ go build cmd/gfc       # gfc
+    $ go build cmd/gfc  # compile gfc
+    $ cp gfc ~/bin/.    # copy gfc to $PATH 
 
 ## Generating gfc encryption keys
 #### Generating AES keys for gfc
@@ -74,6 +74,8 @@ Algorithm mode:
 
 Encoding: None
 
+Compression: None
+
 Key source (AES only): Passphrase
 
 ### Help
@@ -102,6 +104,7 @@ There're 2 ways to use stdin input - piping and by entering text manually.
     $ gfc aes --text -o text.bin;
 
 #### Pre-encryption and post-encryption
+> For more info on gfc pre-processing and post-processing, see [CLI page](/pkg/cli/)
 ##### Encoding
 We can also apply some encoding to our output (encryption) or input (decryption) with `-e <ENCODING>` or `--encoding <ENCODING>`:
 
@@ -165,7 +168,7 @@ Or with xz compression:
 
 ## Testing gfc
 
-In addition to unit tests, Bash scripts `gfc_cli_test.sh` and `gfc_og_test.sh` are shipped with gfc and can be use to test a combination of commands.
+In addition to Go unit tests, Bash scripts `gfc_test.sh` and `gfc_pipe_test.sh` are shipped with gfc and can be use to test a combination of commands.
 
 ## Known issues for gfc-og
 

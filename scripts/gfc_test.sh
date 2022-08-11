@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Local variables are snake_case, while script's global variables are all UPPERCASE.
+# This file performs e2e tests on gfc, in addition to the Go unit tests.
+
 function usage() {
     printf "usage: gfc_test_ng.sh <INFILE> [-v]\n"
     printf "Use -v flag for verbose output\n"
@@ -10,12 +13,16 @@ INFILE="$1";
 
 test -n "$2" && [ $2 == "-v" ] && VERBOSE=1 || VERBOSE=0;
 
+function is_verbose() {
+    test $VERBOSE -ne 0
+}
+
 # Source yn.sh and lb.sh.
 . "$(command -v yn.sh)" || printf "%s\n" "error: missing yn.sh - get it from https://gitlab.com/artnoi/unix/-/tree/main/sh-tools/bin";
 . "$(command -v lb.sh)" || printf "%s\n" "error: missing lb.sh - get it from https://gitlab.com/artnoi/unix/-/tree/main/sh-tools/bin";
 
 TMPTEST="tmptest";
-TEST_CMD="go run ./cmd/gfc"
+TEST_CMD="go run ./cmd/gfc";
 
 # gfc-aes only
 typeset -A AES_MODE_ENUMS;
@@ -48,13 +55,13 @@ function file_test() {
     enc_outfile=$5;
     dec_outfile=$6;
 
-    test $VERBOSE -ne 0\
+    is_verbose\
     && printf "[File Test] %s: %s\n" "${test_num}" "${test_desc}"\
     && echo ""\
-    && printf "Encryption command:\t%s\n" "${enc_cmd}"\
-    && printf "Decryption command:\t%s\n" "${dec_cmd}"\
-    && printf "Encryption outfile:\t%s\n" "${enc_outfile}"\
-    && printf "Decryption outfile:\t%s\n" "${dec_outfile}"\
+    && printf "Encrypt command:\t%s\n" "${enc_cmd}"\
+    && printf "Decrypt command:\t%s\n" "${dec_cmd}"\
+    && printf "Encrypt outfile:\t%s\n" "${enc_outfile}"\
+    && printf "Decrypt outfile:\t%s\n" "${dec_outfile}"\
     && echo "";
 
     simyn "[File Test] Run test ${test_num} ${test_desc}?"\
@@ -74,16 +81,22 @@ function file_test() {
     line;
 }
 
-# Pipe tests must not receive keys (passphrases) from stdin
+# Pipe tests must not receive keys (passphrases) from stdin.
+# The pipe test command must be formatted beforehand by caller.
+# Because pip tests make use of /dev/null to discard decryption output,
+# I'm not sure if it'll work on Windows.
 function pipe_test() {
     test_num="$1";
     test_desc="$2";
     pipe_test_cmd="$3";
 
+    is_verbose\
+    && printf "[Pipe Test] Piped command: %s\n" "${pipe_test_cmd}";
+
     simyn "[Pipe Test] Run test ${test_num} ${test_desc}?"\
     && sh -c "${pipe_test_cmd}"\
-    && printf "[Pipe Test] %s\n" "✅ OK: (Pipe test) ${test_desc}"\
-    || printf "[Pipe Test] %s\n" "❌ Failed: (Pipe test) ${test_desc}";
+    && printf "[Pipe Test] %s\n" "✅ OK: ${test_desc}"\
+    || printf "[Pipe Test] %s\n" "❌ Failed: ${test_desc}";
 
     line
 }

@@ -168,7 +168,7 @@ Or with xz compression:
 
 ## Testing gfc
 
-In addition to Go unit tests, Bash scripts `gfc_test.sh` and `gfc_pipe_test.sh` are shipped with gfc and can be use to test a combination of commands.
+In addition to Go unit tests, Bash scripts `gfc_test.sh` is shipped with gfc and can be use to test a combination of commands.
 
 ## Known issues for gfc-og
 

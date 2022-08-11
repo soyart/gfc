@@ -104,21 +104,21 @@ function rsa_test() {
 # aes_test() loops over relevant enums for gfc-aes and construct parameters for run_test()
 function aes_test() {
     for aes_key_test in ${!AES_KEY_ENUMS[@]}; do
-        for aes_test in ${!AES_MODE_ENUMS[@]}; do
+        for aes_mode_test in ${!AES_MODE_ENUMS[@]}; do
             for encoding_test in ${!ENCODING_ENUMS[@]}; do
                 for compression_test in ${!COMPRESSION_ENUMS[@]}; do
                     ((c++));
 
-                    aes_mode_flag=${AES_MODE_ENUMS[$aes_test]};
+                    aes_mode_flag=${AES_MODE_ENUMS[$aes_mode_test]};
                     aes_key_flag=${AES_KEY_ENUMS[$aes_key_test]}
                     encoding_flag=${ENCODING_ENUMS[$encoding_test]};
                     compress_flag=${COMPRESSION_ENUMS[$compression_test]};
 
-                    file_ext="${aes_test}.${aes_key_test}.${encoding_test}.${compression_test}";
+                    file_ext="${aes_mode_test}.${aes_key_test}.${encoding_test}.${compression_test}";
                     enc_outfile="${TMPTEST}/gfc_aes_test.${file_ext}.bin";
                     dec_outfile="${TMPTEST}/gfc_aes_test.${file_ext}.dec";
 
-                    desc="AES test, mode = ${aes_test}, key = ${aes_key_test}, encoding = ${encoding_test}, compresion = ${compression_test}";
+                    desc="AES test, mode = ${aes_mode_test}, key = ${aes_key_test}, encoding = ${encoding_test}, compresion = ${compression_test}";
                     cmd="${TEST_CMD} aes ${aes_mode_flag} ${aes_key_flag} ${encoding_flag} ${compress_flag}";
                     enc_cmd="${cmd} -i ${INFILE} -o ${enc_outfile};";
                     dec_cmd="${cmd} -d -i ${enc_outfile} -o ${dec_outfile};";
@@ -135,7 +135,6 @@ printf "Caution: RSA is a public key cryptographic algorithm - it can only encry
 && simyn "Test gfc-rsa?"\
 && c=0\
 && rsa_test;
-
 
 # AES tests
 simyn "Test gfc-aes?"\

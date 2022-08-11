@@ -22,23 +22,23 @@ printf "un-tar command: %s\n" "${UNTAR_FLAGS}";
 
 case "${1}" in
 	"-e")
-		INDIR="$2";
-		OUTTARBIN="$3";
-		TARBALL_COMPRESSED="${INDIR}${TARBALL_EXT}";
+		indir="$2";
+		out_tar_bin="$3";
+		tarball_compressed="${indir}${TARBALL_EXT}";
 		# tar the dir first
-		sh -c "${TAR_FLAGS} ${TARBALL_COMPRESSED} ${INDIR};"\
-		&& sh -c "gfc aes -i ${TARBALL_COMPRESSED} -o ${OUTTARBIN};"\
-		&& sh -c "rm ${TARBALL_COMPRESSED};";
+		sh -c "${TAR_FLAGS} ${tarball_compressed} ${indir};"\
+		&& sh -c "gfc aes -i ${tarball_compressed} -o ${out_tar_bin};"\
+		&& sh -c "rm ${tarball_compressed};";
 	;;
 
 	"-d")
-		INTARBIN="$2";
-		OUTDIR="$3"
-		DECRYPTED_TARBALL="${INTARBIN}.decrypted${TARBALL_EXT}";
-		UNTAR_CMD="${UNTAR_FLAGS} ${DECRYPTED_TARBALL} -C ${OUTDIR};";
-		printf "UNTAR_CMD: %s\n" "${UNTAR_CMD}";
-		sh -c "gfc aes -d -i ${INTARBIN} -o ${DECRYPTED_TARBALL};"\
-		&& sh -c "${UNTAR_CMD}"\
-		&& sh -c "rm ${DECRYPTED_TARBALL};";
+		intar_bin="$2";
+		outdir="$3"
+		decrypted_tarball="${intar_bin}.decrypted${TARBALL_EXT}";
+		untar_cmd="${UNTAR_FLAGS} ${decrypted_tarball} -C ${outdir};";
+		printf "untar_cmd: %s\n" "${untar_cmd}";
+		sh -c "gfc aes -d -i ${intar_bin} -o ${decrypted_tarball};"\
+		&& sh -c "${untar_cmd}"\
+		&& sh -c "rm ${decrypted_tarball};";
 	;;
 esac;

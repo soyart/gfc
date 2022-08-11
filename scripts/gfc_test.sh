@@ -144,7 +144,7 @@ if [[ -x gfc && ! -d gfc ]];
 
 	gfccmd='./gfc';
 else
-	gfccmd="go run ./cmd/gfc aes";
+	gfccmd="go run ./cmd/gfc";
 fi;
 
 encsrc='assets/files/zeroes';
@@ -152,6 +152,7 @@ aeskey='assets/files/aes.key';
 encdst0='tmptest/testgfc';
 decdst0='tmptest/zeroes';
 
+# RSA test
 simyn "Run test RSA on file assets/files/aes.key with keys assets/files/pub.pem and assets/files/pri.pem?"\
 && pub="./assets/files/pub.pem"\
 && pri="./assets/files/pri.pem"\
@@ -163,9 +164,9 @@ simyn "Run test RSA on file assets/files/aes.key with keys assets/files/pub.pem 
 && printf "Testing equality\n"\
 && diff tmptest/aes.key assets/files/aes.key\
 && printf "✅ (ok) assets/files match\n"\
-&& sh -c "${gfccmd} -rsa -k -pub $pub -i ${aeskey} -o tmptest/rsaOut"\
+&& sh -c "${gfccmd} rsa --public-key $pub -i ${aeskey} -o tmptest/rsaOut"\
 && printf "Testing RSA decryption\n"\
-&& sh -c "${gfccmd} -rsa -d -k -pri $pri -i tmptest/rsaOut -o tmptest/aes.key"\
+&& sh -c "${gfccmd} rsa -d --private-key $pri -i tmptest/rsaOut -o tmptest/aes.key"\
 && printf "Testing equality\n"\
 && diff tmptest/aes.key "${aeskey}"\
 && printf "✅ (ok) file match\n"\
@@ -174,9 +175,9 @@ simyn "Run test RSA on file assets/files/aes.key with keys assets/files/pub.pem 
 
 line;
 
+# AES test
 # Get function names of this file from awk
 functions=$(awk '/^function / {print substr($2, 1, length($2)-2)}' $0);
-
 c=0 && for fun in ${functions[@]};
 do
 	((c++));
@@ -192,8 +193,8 @@ do
 	|| continue;
 
 	# Encrypt, decrypt, and check diff
-	sh -c "${gfccmd} -i ${encsrc} -o ${encdst} ${alflag}";
-	sh -c "${gfccmd} -i ${decsrc} -o ${decdst} ${alflag} -d";
+	sh -c "${gfccmd} aes -i ${encsrc} -o ${encdst} ${alflag}";
+	sh -c "${gfccmd} aes -i ${decsrc} -o ${decdst} ${alflag} -d";
 	diff $decdst $encsrc\
 	&& printf "\n✅ (ok) files match:\n${decdst} == ${encdst}\n"\
 	|| printf "\n❌ (failed) files differ:\n${decdst} xx ${encdst}\n";

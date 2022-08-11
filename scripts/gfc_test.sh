@@ -98,7 +98,7 @@ function pipe_test() {
     && printf "[Pipe Test] %s\n" "✅ OK: ${test_desc}"\
     || printf "[Pipe Test] %s\n" "❌ Failed: ${test_desc}";
 
-    line
+    line;
 }
 
 # rsa_test() loops over relevant enums for gfc-rsa and construct parameters for file_test()

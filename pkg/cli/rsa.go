@@ -21,8 +21,7 @@ func (cmd *rsaCommand) algoMode() (gfc.AlgoMode, error) {
 	return gfc.RSA_OEAP, nil
 }
 
-// Unlike with AES, gfc will not be reading either of the keypair from files.
-// Instead, users will provide the keys as string
+// rsaCommand will give key strings priority over key filenames
 func (cmd *rsaCommand) key() ([]byte, error) {
 	if cmd.DecryptFlag {
 		if cmd.PriKey == "" {

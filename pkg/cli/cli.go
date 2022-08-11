@@ -114,10 +114,16 @@ func readInput(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 			// Read whole stdin input
 			for {
 				stdinBuf := make([]byte, 1024)
-				if _, err := infile.Read(stdinBuf); err == io.EOF {
+				n, err := infile.Read(stdinBuf)
+				if n > 0 {
+					gfcInput.Write(stdinBuf[:n])
+				}
+				if err == io.EOF {
 					break
 				}
-				gfcInput = bytes.NewBuffer(stdinBuf)
+				if err != nil {
+					return nil, errors.Wrap(err, "failed to read input from stdin")
+				}
 			}
 		}
 	} else {

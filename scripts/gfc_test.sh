@@ -1,206 +1,143 @@
 #!/usr/bin/env bash
 
-# This file is deprecated. It is only here for reference purpose, in case I want to rewrite gfc_gfc_cli_test.sh
-
-# For yes/no prompt, and line breaks
-# get it at gitlab.com/artnoi-staple/unix/sh-tools/bin/yn.sh
-
-. "$(command -v yn.sh)";
-. "$(command -v lb.sh)";
-
-mkdir -p tmptest;
-typeset -A name flag ext;
-
-# If you dont want to run certain test functions,
-# just prepend a comment (#) OR remove the 'function' keyword
-
-# Tests will be run from top to bottom
-
-function gcm_key() {
-	name[gcm_key]='AES GCM (with keyfile)';
-	flag[gcm_key]="-k ./assets/files/aes.key";
-	ext[gcm_key]='.gcm.wkey';
-}
-function gcm_hex_key() {
-	name[gcm_hex_key]='AES GCM (hex with keyfile)';
-	flag[gcm_hex_key]="--encoding hex -k ./assets/files/aes.key";
-	ext[gcm_hex_key]='.gcm.hex.wkey';
-}
-function gcm_b64_key() {
-	name[gcm_b64_key]='AES GCM (Base64 with keyfile)';
-	flag[gcm_b64_key]="--encoding b64 -k ./assets/files/aes.key";
-	ext[gcm_b64_key]='.gcm.b64.wkey';
-}
-function gcm_compressed_key() {
-	name[gcm_compressed_key]='AES GCM (with keyfile) compressed';
-	flag[gcm_compressed_key]="-c -k ./assets/files/aes.key";
-	ext[gcm_compressed_key]='.gcm.cmp.wkey';
-}
-function gcm_compressed_hex_key() {
-	name[gcm_compressed_hex_key]='AES GCM (Hex with keyfile) compressed';
-	flag[gcm_compressed_hex_key]="-c -encoding hex -k ./assets/files/aes.key";
-	ext[gcm_compressed_hex_key]='.gcm.cmp.hex.wkey';
-}
-function gcm_compressed_b64_key() {
-	name[gcm_compressed_b64_key]='AES GCM (Base64 with keyfile) compressed';
-	flag[gcm_compressed_b64_key]="-c --encoding b64 -k ./assets/files/aes.key";
-	ext[gcm_compressed_b64_key]='.gcm.cmp.b64.wkey';
-}
-function ctr_key() {
-	name[ctr_key]='AES CTR (with keyfile)';
-	flag[ctr_key]="-m CTR -k ./assets/files/aes.key";
-	ext[ctr_key]+='.ctr.wkey';
-}
-function ctr_hex_key() {
-	name[ctr_hex_key]='AES CTR (hex with keyfile)';
-	flag[ctr_hex_key]="-m CTR --encoding hex -k ./assets/files/aes.key";
-	ext[ctr_hex_key]+='.ctr.hex.wkey';
-}
-function ctr_b64_key() {
-	name[ctr_b64_key]='AES CTR (Base64 with keyfile)';
-	flag[ctr_b64_key]="-m CTR --encoding b64 -k ./assets/files/aes.key";
-	ext[ctr_b64_key]+='.ctr.b64.wkey';
-}
-function ctr_compressed_key() {
-	name[ctr_compressed_key]='AES CTR (with keyfile) compressed';
-	flag[ctr_compressed_key]="-c -m CTR -k ./assets/files/aes.key";
-	ext[ctr_compressed_key]+='.ctr.cmp.wkey';
-}
-function ctr_compressed_hex_key() {
-	name[ctr_compressed_hex_key]='AES CTR (Hex with keyfile) compressed';
-	flag[ctr_compressed_hex_key]="-c --encoding hex -m CTR -k ./assets/files/aes.key";
-	ext[ctr_compressed_hex_key]+='.ctr.cmp.hex.wkey';
-}
-function ctr_compressed_b64_key() {
-	name[ctr_compressed_b64_key]='AES CTR (Base64 with keyfile) compressed';
-	flag[ctr_compressed_b64_key]="-c --encoding b64 -m CTR -k ./assets/files/aes.key";
-	ext[ctr_compressed_b64_key]+='.ctr.cmp.b64.wkey';
-}
-function gcm() {
-	name[gcm]='AES GCM (passphrase)';
-	flag[gcm]="";
-	ext[gcm]='.gcm';
-}
-function gcm_hex() {
-	name[gcm_hex]='AES GCM (hex with passphrase)';
-	flag[gcm_hex]="--encoding hex";
-	ext[gcm_hex]='.gcm.hex';
-}
-function gcm_b64() {
-	name[gcm_b64]='AES GCM (Base64 with passphrase)';
-	flag[gcm_b64]="--encoding b64";
-	ext[gcm_b64]='.gcm.b64';
-}
-function gcm_compressed() {
-	name[gcm_compressed]='AES GCM (passphrase) compressed';
-	flag[gcm_compressed]="-c";
-	ext[gcm_compressed]='.gcm.cmp';
-}
-function gcm_compressed_hex() {
-	name[gcm_compressed_hex]='AES GCM (Hex with passphrase) compressed';
-	flag[gcm_compressed_hex]="-c";
-	ext[gcm_compressed_hex]='.gcm.cmp.hex';
-}
-function gcm_compressed_b64() {
-	name[gcm_compressed_b64]='AES GCM (Base64 passphrase) compressed';
-	flag[gcm_compressed_b64]="-c --encoding b64";
-	ext[gcm_compressed_b64]='.gcm.cmp.b64';
-}
-function ctr() {
-	name[ctr]='AES CTR (passphrase)';
-	flag[ctr]="-m CTR";
-	ext[ctr]+='.ctr';
-}
-function ctr_hex() {
-	name[ctr_hex]='AES CTR (hex with passphrase)';
-	flag[ctr_hex]="-m CTR --encoding hex";
-	ext[ctr_hex]+='.ctr.hex';
-}
-function ctr_b64() {
-	name[ctr_b64]='AES CTR (Base64 with passphrase)';
-	flag[ctr_b64]="-m CTR --encoding b64";
-	ext[ctr_b64]+='.ctr.b64';
-}
-function ctr_compressed() {
-	name[ctr_compressed]='AES CTR (passphrase) compressed';
-	flag[ctr_compressed]="-c -m CTR";
-	ext[ctr_compressed]+='.ctr.cmp';
-}
-function ctr_compressed_hex() {
-	name[ctr_compressed_hex]='AES CTR (Hex with passphrase) compressed';
-	flag[ctr_compressed_hex]="-c --encoding hex -m CTR";
-	ext[ctr_compressed_hex]+='.ctr.cmp.hex';
-}
-function ctr_compressed_b64() {
-	name[ctr_compressed_b64]='AES CTR (Base64 with passphrase) compressed';
-	flag[ctr_compressed_b64]="-c --encoding b64 -m CTR";
-	ext[ctr_compressed_b64]+='.ctr.cmp.b64';
+function usage() {
+    printf "usage: gfc_test_ng.sh <INFILE> [-v]\n"
+    printf "Use -v flag for verbose output\n"
 }
 
-if [[ -x gfc && ! -d gfc ]];
-	then
-	printf "WARN: Testing built binary not source\n";
-	printf "To test source, remove file named 'gfc'\n";
+test -z "$1" && printf "Missing test file argument\n" && usage && exit 1;
+INFILE="$1";
 
-	gfccmd='./gfc';
-else
-	gfccmd="go run ./cmd/gfc aes";
-fi;
+test -n "$2" && [ $2 == "-v" ] && VERBOSE=1 || VERBOSE=0;
 
-encsrc='assets/files/zeroes';
-aeskey='assets/files/aes.key';
-encdst0='tmptest/testgfc';
-decdst0='tmptest/zeroes';
+# Source yn.sh and lb.sh.
+. "$(command -v yn.sh)" || printf "%s\n" "error: missing yn.sh - get it from https://gitlab.com/artnoi/unix/-/tree/main/sh-tools/bin";
+. "$(command -v lb.sh)" || printf "%s\n" "error: missing lb.sh - get it from https://gitlab.com/artnoi/unix/-/tree/main/sh-tools/bin";
 
-simyn "Run test RSA on file assets/files/aes.key with keys assets/files/pub.pem and assets/files/pri.pem?"\
-&& pub="./assets/files/pub.pem"\
-&& pri="./assets/files/pri.pem"\
-&& printf "Testing RSA encryption (ENV)\n"\
-&& [[ -f $pub || -f $pri ]]\
-&& PUB=$(< $pub) sh -c "${gfccmd} rsa -i "${aeskey}" -o tmptest/rsaOut"\
-&& printf "Testing RSA decryption (ENV)\n"\
-&& PRI=$(< $pri) sh -c "${gfccmd} rsa -d -i tmptest/rsaOut -o tmptest/aes.key"\
-&& printf "Testing equality\n"\
-&& diff tmptest/aes.key assets/files/aes.key\
-&& printf "✅ (ok) assets/files match\n"\
-&& sh -c "${gfccmd} -rsa -k -pub $pub -i ${aeskey} -o tmptest/rsaOut"\
-&& printf "Testing RSA decryption\n"\
-&& sh -c "${gfccmd} -rsa -d -k -pri $pri -i tmptest/rsaOut -o tmptest/aes.key"\
-&& printf "Testing equality\n"\
-&& diff tmptest/aes.key "${aeskey}"\
-&& printf "✅ (ok) file match\n"\
-&& rm tmptest/rsaOut tmptest/aes.key\
-|| printf "❌ (failed) assets/files differ\n";
+TMPTEST="tmptest";
+TEST_CMD="go run ./cmd/gfc"
 
-line;
+# gfc-aes only
+typeset -A AES_MODE_ENUMS;
+AES_MODE_ENUMS["CTR"]="--mode CTR";
+AES_MODE_ENUMS["GCM"]="--mode GCM";
 
-# Get function names of this file from awk
-functions=$(awk '/^function / {print substr($2, 1, length($2)-2)}' $0);
+# gfc-aes only
+typeset -A AES_KEY_ENUMS;
+AES_KEY_ENUMS["Passphrase"]="";
+AES_KEY_ENUMS["Keyfile"]="--key ./assets/files/aes.key";
 
-c=0 && for fun in ${functions[@]};
-do
-	((c++));
+typeset -A ENCODING_ENUMS;
+ENCODING_ENUMS["NoEncoding"]=""
+ENCODING_ENUMS["Hex"]="--encoding hex";
+ENCODING_ENUMS["Base64"]="--encoding b64";
 
-	"$fun"\
-	&& name="${name[$fun]}"\
-	&& encdst="${encdst0}${ext[$fun]}"\
-	&& decsrc="${encdst}"\
-	&& decdst="${decdst0}${ext[$fun]}"\
-	&& alflag="${flag[$fun]}";
-	
-	simyn "\nRun test ${c} - ${name[$fun]}"\
-	|| continue;
+typeset -A COMPRESSION_ENUMS
+COMPRESSION_ENUMS["NoCompress"]="";
+COMPRESSION_ENUMS["Compress"]="--compress";
 
-	# Encrypt, decrypt, and check diff
-	sh -c "${gfccmd} -i ${encsrc} -o ${encdst} ${alflag}";
-	sh -c "${gfccmd} -i ${decsrc} -o ${decdst} ${alflag} -d";
-	diff $decdst $encsrc\
-	&& printf "\n✅ (ok) files match:\n${decdst} == ${encdst}\n"\
-	|| printf "\n❌ (failed) files differ:\n${decdst} xx ${encdst}\n";
-	simyn "Finished test ${name}.\nRemove test files?"\
-	&& rm -v "$encdst" "$decdst";
-	line;
-done;
+# run_test() runs 1 test. It accept 6 arguments for the test.
+# it is used to print test info to screen as well as running the actual test,
+# reporting the test result, and later performs cleanup operations.
+function run_test() {
+    # Argument list
+    test_num=$1;
+    desc=$2;
+    enc_cmd=$3;
+    dec_cmd=$4;
+    enc_outfile=$5;
+    dec_outfile=$6;
 
-simyn "All tests done. Remove all test files?"\
-&& rm -v "$encdst0"* "$decdst0"*;
+    test $VERBOSE -ne 0\
+    && printf "Test %s: %s\n" "${test_num}" "${desc}"\
+    && echo ""\
+    && printf "Encryption command:\t%s\n" "${enc_cmd}"\
+    && printf "Decryption command:\t%s\n" "${dec_cmd}"\
+    && printf "Encryption outfile:\t%s\n" "${enc_outfile}"\
+    && printf "Decryption outfile:\t%s\n" "${dec_outfile}"\
+    && echo "";
+
+    simyn "Run test ${test_num} ${desc}"\
+    && runtest=1\
+    && sh -c "${enc_cmd}"\
+    && sh -c "${dec_cmd}"\
+    && diff "${INFILE}" "${dec_outfile}"\
+    && printf "%s\n" "✅ OK: ${desc}"\
+    || printf "%s\n" "❌ Failed: ${desc}";
+
+    test $runtest -ne 0\
+    && printf "Cleaning up %s %s\n" "${enc_outfile}" "${dec_outfile}"\
+    && rm ${enc_outfile} ${dec_outfile}\
+    && printf "%s\n" "✅ Cleanup successful"\
+    || printf "%s\n" "❌ Cleanup failed: ${desc}";
+
+    line;
+}
+
+# rsa_test() loops over relevant enums for gfc-rsa and construct parameters for run_test()
+function rsa_test() {
+    for encoding_test in ${!ENCODING_ENUMS[@]}; do
+        for compression_test in ${!COMPRESSION_ENUMS[@]}; do
+            ((c++));
+
+            # Hard-coded
+            prikey="assets/files/pri.pem";
+            pubkey="assets/files/pub.pem";
+
+            encoding_flag=${ENCODING_ENUMS[$encoding_test]};
+            compress_flag=${COMPRESSION_ENUMS[$compression_test]};
+
+            file_ext="${encoding_test}.${compression_test}";
+            enc_outfile="${TMPTEST}/gfc_rsa_test.${file_ext}.bin";
+            dec_outfile="${TMPTEST}/gfc_rsa_test.${file_ext}.dec";
+
+            desc="RSA test, encoding = ${encoding_test}, compresion = ${compression_test}";
+            cmd="${TEST_CMD} rsa ${encoding_flag} ${compress_flag}";
+            enc_cmd="${cmd} --public-key ${pubkey} -i ${INFILE} -o ${enc_outfile};";
+            dec_cmd="${cmd} -d --private-key ${prikey} -i ${enc_outfile} -o ${dec_outfile};";
+
+            run_test "$c" "$desc" "$enc_cmd" "$dec_cmd" "${enc_outfile}" "${dec_outfile}";
+        done;
+    done;
+}
+
+# aes_test() loops over relevant enums for gfc-aes and construct parameters for run_test()
+function aes_test() {
+    for aes_key_test in ${!AES_KEY_ENUMS[@]}; do
+        for aes_test in ${!AES_MODE_ENUMS[@]}; do
+            for encoding_test in ${!ENCODING_ENUMS[@]}; do
+                for compression_test in ${!COMPRESSION_ENUMS[@]}; do
+                    ((c++));
+
+                    aes_mode_flag=${AES_MODE_ENUMS[$aes_test]};
+                    aes_key_flag=${AES_KEY_ENUMS[$aes_key_test]}
+                    encoding_flag=${ENCODING_ENUMS[$encoding_test]};
+                    compress_flag=${COMPRESSION_ENUMS[$compression_test]};
+
+                    file_ext="${aes_test}.${aes_key_test}.${encoding_test}.${compression_test}";
+                    enc_outfile="${TMPTEST}/gfc_aes_test.${file_ext}.bin";
+                    dec_outfile="${TMPTEST}/gfc_aes_test.${file_ext}.dec";
+
+                    desc="AES test, mode = ${aes_test}, key = ${aes_key_test}, encoding = ${encoding_test}, compresion = ${compression_test}";
+                    cmd="${TEST_CMD} aes ${aes_mode_flag} ${aes_key_flag} ${encoding_flag} ${compress_flag}";
+                    enc_cmd="${cmd} -i ${INFILE} -o ${enc_outfile};";
+                    dec_cmd="${cmd} -d -i ${enc_outfile} -o ${dec_outfile};";
+
+                    run_test "$c" "$desc" "$enc_cmd" "$dec_cmd" "${enc_outfile}" "${dec_outfile}";
+                done;
+            done;
+        done;
+    done;
+}
+
+# RSA tests
+printf "Caution: RSA is a public key cryptographic algorithm - it can only encrypt a short length message\n"\
+&& simyn "Test gfc-rsa?"\
+&& c=0\
+&& rsa_test;
+
+
+# AES tests
+simyn "Test gfc-aes?"\
+&& c=0\
+&& aes_test;

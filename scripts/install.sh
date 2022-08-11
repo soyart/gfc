@@ -4,7 +4,7 @@ function copyfile() {
     cp -a gfc scripts/rgfc.sh ~/bin/.;
 }
 
-[  -f gfc ]\
+test  -f gfc \
 && copyfile\
 || go build -o gfc ./cmd/gfc\
 && copyfile;

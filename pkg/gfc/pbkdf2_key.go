@@ -41,12 +41,7 @@ func generateKeySaltPBKDF2(passphrase []byte, salt []byte) ([]byte, []byte) {
 // If AES key is nil, getPass() is called to get passphrase from user.
 // If salt is nil, new salt is created.
 func keySaltPBKDF2(aesKey []byte, salt []byte) ([]byte, []byte, error) {
-	if aesKey == nil {
-		// Passphrase
-		key, salt := generateKeySaltPBKDF2(getPass(), salt)
-		return key, salt, nil
-
-	} else {
+	if aesKey != nil {
 		keyLen := len(aesKey)
 		if keyLen != keyFileLen {
 			return nil, nil, ErrInvalidKeyfileLen
@@ -55,4 +50,7 @@ func keySaltPBKDF2(aesKey []byte, salt []byte) ([]byte, []byte, error) {
 		salt = generateSaltPBKDF2(salt)
 		return aesKey, salt, nil
 	}
+	// Passphrase
+	key, salt := generateKeySaltPBKDF2(getPass(), salt)
+	return key, salt, nil
 }

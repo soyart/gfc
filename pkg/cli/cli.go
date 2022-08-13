@@ -36,6 +36,9 @@ func (a *Args) Handle() error {
 	case a.XChaCha20Command != nil:
 		cmd = a.XChaCha20Command
 		algo = gfc.AlgoXChaCha20
+	default:
+		gfc.Write(os.Stderr, "missing subcommand: see gfc --help\n")
+		os.Exit(1)
 	}
 
 	isTextInput := cmd.isText()

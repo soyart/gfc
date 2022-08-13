@@ -18,9 +18,9 @@ type baseCryptFlags struct {
 }
 
 type Args struct {
-	AESCommand       *aesCommand      `arg:"subcommand:aes"`
-	RSACommand       *rsaCommand      `arg:"subcommand:rsa"`
-	XChaCha20Command *ChaCha20Command `arg:"subcommand:cc20"`
+	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption"`
+	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption"`
+	XChaCha20Command *ChaCha20Command `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption1"`
 }
 
 func infile(fname string, isText bool) (*os.File, error) {

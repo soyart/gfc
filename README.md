@@ -72,7 +72,7 @@ Default encryption mode:
 
 - AES: AES256-GCM
 
-- ChaCha20: XChaCha-Poly1305
+- ChaCha20: XChaCha20-Poly1305
 
 - RSA: RSA256-OEAP (only one is supported)
 
@@ -87,7 +87,7 @@ gfc has 2 subcommands - `aes` for AES encryption, and `rsa` for RSA encryption. 
 
     $ gfc aes -h; # See help for gfc-aes
     $ gfc rsa -h; # See help for gfc-rsa
-    $ gfc-cc20 -h; # See help for gfc-cc20
+    $ gfc cc20 -h; # See help for gfc-cc20
 
 ### General arguments/flags
 #### Input and output

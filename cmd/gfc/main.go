@@ -13,7 +13,7 @@ func main() {
 	var args = new(cli.Args)
 	arg.MustParse(args)
 
-	if err := args.Handle(); err != nil {
+	if err := args.RunCLI(); err != nil {
 		gfc.Write(os.Stderr, "error: "+err.Error()+"\n")
 		os.Exit(2)
 	}

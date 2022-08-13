@@ -13,11 +13,13 @@ func EncryptChaCha20(
 	nonceSize int,
 	plaintext Buffer,
 	key []byte,
-) (Buffer, error) {
+) (
+	Buffer,
+	error,
+) {
 	key, salt, err := keySaltPBKDF2(key, nil)
 	if err != nil {
-		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
-		return nil, errors.Wrap(err, "ChaCha20Poly1305 encryption")
+		return nil, errors.Wrap(err, "failed to get key and salt with PBKDF2")
 	}
 	block, err := newCipherFunc(key)
 	if err != nil {
@@ -33,10 +35,13 @@ func DecryptChaCha20(
 	nonceSize int,
 	ciphertext Buffer,
 	key []byte,
-) (Buffer, error) {
+) (
+	Buffer,
+	error,
+) {
 	ciphertextBytes, key, nonce, err := unmarshalGfcSymmAEAD(ciphertext, key, nonceSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal")
+		return nil, errors.Wrap(err, "failed to unmarshal gfc symmAEAD format")
 	}
 	block, err := newCipherFunc(key)
 	if err != nil {

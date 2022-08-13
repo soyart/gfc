@@ -38,7 +38,10 @@ func (cmd *aesCommand) crypt(
 	buf gfc.Buffer,
 	key []byte,
 	decrypt bool,
-) (gfc.Buffer, error) {
+) (
+	gfc.Buffer,
+	error,
+) {
 	switch mode {
 	case gfc.AES_GCM:
 		if decrypt {

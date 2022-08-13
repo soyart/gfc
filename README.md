@@ -188,23 +188,19 @@ The main (stable) branch of gfc is hosted on [Github](https://github.com/artnoi4
 
 I try my best to keep dependencies low and aviod using external libraries.
 
-- `"golang.org/x/term"`
+- [`golang.org/x/term`](https://golang.org/x/term)
 
 imported for a proper, secure passphrase prompt
 
-- `"golang.org/x/crypto"`
+- [`golang.org/x/crypto`](https://golang.org/x/crypto)
 
-imported for cryptographic ciphers, e.g. AES and ChaCha20
+imported for cryptographic ciphers, e.g. AES and ChaCha20, and [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2)
 
-- `"golang.org/x/crypto/pbkdf2"`
-
-imported for [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) key derivation function for passphrase
-
-- `github.com/alexflint/go-arg`
+- [`github.com/alexflint/go-arg`](https://github.com/alexflint/go-arg)
 
 imported for CLI argument handling
 
-- `github.com/klauspost/compress`
+- [`github.com/klauspost/compress`](https://github.com/klauspost/compress)
 
 imported for ZSTD compression
 

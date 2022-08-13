@@ -9,6 +9,8 @@ Users can import this package and use the functions defined here easily.
 
     <Ciphertext> <Cipher Nonce> <PBKDF2 Salt>
 
+> TODO: This output format is currently implemented as a structure. Maybe we'll add struct `symmOut` so that all gfc output from all symmetric key encryption algorithms are standardized.
+
 `PBKDF2 Salt` is fixed in gfc, at length of 32-byte.
 
 `Cipher Nonce` size is different for each cipher:

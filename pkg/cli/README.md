@@ -6,8 +6,8 @@ gfc is designed as a command-line program with *subcommands* similar to how `git
 The new struct can make use of `baseCryptFlags`, which represents shared command-line flags for encryption/decryption across all gfc crypto algorithms.
 
 ## `cli.go`
-It first defines a `Command` interface, which all subcommands must implement. It is built around package `github.com/alexflint/go-arg`, where struct `Args` (defined in `args.go`) has other subcommands as fields. `Args.Handle` is used to *handle* the program flow.
-### `Args.Handle`
+It first defines a `Command` interface, which all subcommands must implement. It is built around package `github.com/alexflint/go-arg`, where struct `Args` (defined in `cli.go`) has other subcommands as fields. `args.RunCLI` is used to *handle* the program flow.
+### `args.RunCLI`
 Regardless of the subcommands, gfc starts by validating that all parameters it received are both valid and usable (if it's a file, then gfc must be able to open it on a filesystem, etc).
 
 After that, it reads bytes from `infile` to memory using `readInput`. Then, it calls `preProcess`, which transforms the input based on flags provided by the user. An example of pre-processing is compressing the input bytes when encrypting, or decoding the base64-encoded input when decrypting.

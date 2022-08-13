@@ -38,12 +38,11 @@ func EncryptRSA(plaintext Buffer, pubKey []byte) (Buffer, error) {
 		plaintextBytes = plaintext.Bytes()
 	}
 
-	ciphertextRaw, err := rsa.EncryptOAEP(hash, salt, pub, plaintextBytes, nil)
+	ciphertext, err := rsa.EncryptOAEP(hash, salt, pub, plaintextBytes, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrEncryptRSA.Error())
 	}
-	ciphertext := bytes.NewBuffer(ciphertextRaw)
-	return ciphertext, nil
+	return bytes.NewBuffer(ciphertext), nil
 }
 
 func DecryptRSA(ciphertext Buffer, priKey []byte) (Buffer, error) {
@@ -59,10 +58,9 @@ func DecryptRSA(ciphertext Buffer, priKey []byte) (Buffer, error) {
 		ciphertextBytes = ciphertext.Bytes()
 	}
 
-	plaintextRaw, err := rsa.DecryptOAEP(hash, salt, pri, ciphertextBytes, nil)
+	plaintext, err := rsa.DecryptOAEP(hash, salt, pri, ciphertextBytes, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrDecryptRSA.Error())
 	}
-	plaintext := bytes.NewBuffer(plaintextRaw)
-	return plaintext, nil
+	return bytes.NewBuffer(plaintext), nil
 }

@@ -8,8 +8,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-// marshalGfcSymmAEAD marshals the output for all symmetric key encryption by gfc
-func marshalGfcSymmAEAD(c cipher.AEAD, plaintext Buffer, nonceSize int, salt []byte) (Buffer, error) {
+// marshalGfcSymmAEAD generates random nonce of size nonceSize
+// and marshals the output for all symmetric key encryption by gfc
+func marshalGfcSymmAEAD(
+	c cipher.AEAD,
+	plaintext Buffer,
+	nonceSize int,
+	salt []byte,
+) (
+	Buffer,
+	error,
+) {
 	nonce := make([]byte, nonceSize)
 	rand.Read(nonce)
 
@@ -21,7 +30,16 @@ func marshalGfcSymmAEAD(c cipher.AEAD, plaintext Buffer, nonceSize int, salt []b
 }
 
 // unmarshalGfcSymmAEAD unmarshals gfc symmetric key encryption output into ciphertext, key, and nonce
-func unmarshalGfcSymmAEAD(ciphertext Buffer, key []byte, nonceSize int) ([]byte, []byte, []byte, error) {
+func unmarshalGfcSymmAEAD(
+	ciphertext Buffer,
+	key []byte,
+	nonceSize int,
+) (
+	[]byte, // Ciphertext
+	[]byte, // Key
+	[]byte, // Nonce
+	error,
+) {
 	ciphertextBytes := ciphertext.Bytes()
 	lenGfcCiphertext := ciphertext.Len()
 

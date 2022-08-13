@@ -47,7 +47,10 @@ func (cmd *rsaCommand) crypt(
 	buf gfc.Buffer,
 	key []byte,
 	decrypt bool,
-) (gfc.Buffer, error) {
+) (
+	gfc.Buffer,
+	error,
+) {
 	switch mode {
 	case gfc.RSA_OEAP:
 		if decrypt {

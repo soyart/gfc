@@ -11,6 +11,7 @@ import (
 	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
+// Args represent the actual top-level gfc command.
 type Args struct {
 	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption"`
 	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption"`
@@ -19,18 +20,28 @@ type Args struct {
 
 // aesCommand and rsaCommand implement this interface
 type Command interface {
-	infile() (*os.File, error)
-	outfile() (*os.File, error)
-	decrypt() bool
-	isText() bool // Check if gfc gets its input from console prompt
-	compression() bool
-	algoMode() (gfc.AlgoMode, error)
-	encoding() gfc.Encoding
-	key() ([]byte, error)
-	crypt(gfc.AlgoMode, gfc.Buffer, []byte, bool) (gfc.Buffer, error)
+	// baseCryptFlags methods have default implementation done by *baseCryptFlags.
+	// If an algorithm embeds *baseCryptFlags, these methods should already be inherited.
+	// You can override these methods with your own algorithm implementation.
+
+	infile() (*os.File, error)       // infile returns file pointer to the infile
+	outfile() (*os.File, error)      // outfile returns file pointer to the outfile
+	decrypt() bool                   // decrypt returns if user specified decryption operation
+	isText() bool                    // isText checks if user wants to manually input text from console prompt
+	compression() bool               // compression checks if user wants to include ZSTD in the pipeline
+	algoMode() (gfc.AlgoMode, error) // algoMode  checks if user specified invalid mode before attempting to read file
+	encoding() gfc.Encoding          // encoding returns if user wants to apply encoding to the pipeline, and if so, which one
+
+	// Algorithm methods - not defined in *baseCryptFlags
+
+	key() ([]byte, error) // key returns bytes of user-generated keys for use with crypt
+	// crypt performs encryption on buffer 'buf' using key 'key'.
+	// Some algorithms may further derive the actual encryption key from 'key'.
+	// If 'decrypt' is true, the operation will be decryption
+	crypt(mode gfc.AlgoMode, buf gfc.Buffer, key []byte, decrypt bool) (gfc.Buffer, error)
 }
 
-func (a *Args) Handle() error {
+func (a *Args) RunCLI() error {
 	var cmd Command
 	switch {
 	case a.AESCommand != nil:
@@ -119,6 +130,7 @@ func readInput(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 			scanner.Scan()
 			gfcInput = bytes.NewBuffer(scanner.Bytes())
 		} else {
+			// TODO: maybe use io.ReadAll?
 			// Read whole stdin input
 			for {
 				stdinBuf := make([]byte, 1024)
@@ -147,7 +159,15 @@ func readInput(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 }
 
 // preProcess creates and modifies the input buffer before encryption/decryption stage.
-func preProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding, compress bool) (gfc.Buffer, error) {
+func preProcess(
+	buf gfc.Buffer,
+	decrypt bool,
+	encoding gfc.Encoding,
+	compress bool,
+) (
+	gfc.Buffer,
+	error,
+) {
 	var err error
 	if decrypt {
 		// Decryption may need to decide encoded input
@@ -166,7 +186,15 @@ func preProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding, compress bo
 }
 
 // postProcess modifies the output buffer after encryption/decryption stage before gfc writes it out to outfile
-func postProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding, compress bool) (gfc.Buffer, error) {
+func postProcess(
+	buf gfc.Buffer,
+	decrypt bool,
+	encoding gfc.Encoding,
+	compress bool,
+) (
+	gfc.Buffer,
+	error,
+) {
 	if decrypt {
 		return gfc.Decompress(compress, buf)
 	}

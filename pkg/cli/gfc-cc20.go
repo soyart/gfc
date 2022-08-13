@@ -34,7 +34,10 @@ func (cmd *chaCha20Command) crypt(
 	buf gfc.Buffer,
 	key []byte,
 	decrypt bool,
-) (gfc.Buffer, error) {
+) (
+	gfc.Buffer,
+	error,
+) {
 	switch mode {
 	case gfc.XChaCha20_Poly1305:
 		if decrypt {

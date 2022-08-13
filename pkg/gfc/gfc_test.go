@@ -11,7 +11,7 @@ func TestCryptography(t *testing.T) {
 	plaintext := []byte("this is my plaintext")
 
 	t.Run("testAES", func(t *testing.T) {
-		key := make([]byte, keyFileLen)
+		key := make([]byte, aes256BitKeyFileLen)
 		_, err := rand.Read(key)
 		if err != nil {
 			t.Fatalf("error filling random key bytes: %s", err.Error())
@@ -35,6 +35,14 @@ func TestCryptography(t *testing.T) {
 		}
 
 		testAsymmestricCryptograhy(t, "RSA256-OEAP", EncryptRSA, DecryptRSA, plaintext, priPEM, pubPEM)
+	})
+	t.Run("testXChaCha20Poly1305", func(t *testing.T) {
+		key := make([]byte, aes256BitKeyFileLen)
+		_, err := rand.Read(key)
+		if err != nil {
+			t.Fatalf("error filling random key bytes: %s", err.Error())
+		}
+		testSymmestricCryptograhy(t, "XChaCha20Poly1305", EncryptXChaCha20Poly1305, DecryptXChaCha20Poly1305, plaintext, key)
 	})
 }
 

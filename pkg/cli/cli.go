@@ -33,6 +33,9 @@ func (a *Args) Handle() error {
 	case a.RSACommand != nil:
 		cmd = a.RSACommand
 		algo = gfc.AlgoRSA
+	case a.XChaCha20Command != nil:
+		cmd = a.XChaCha20Command
+		algo = gfc.AlgoXChaCha20
 	}
 
 	isTextInput := cmd.isText()
@@ -164,6 +167,8 @@ func crypt(buf gfc.Buffer, key []byte, decrypt bool, algo gfc.Algorithm, mode gf
 		return cryptAES(buf, key, decrypt, mode)
 	case gfc.AlgoRSA:
 		return cryptRSA(buf, key, decrypt, mode)
+	case gfc.AlgoXChaCha20:
+		return cryptChaCha20(buf, key, decrypt, mode)
 	}
 	return nil, errors.New("invalid crypto algorithm")
 }
@@ -195,6 +200,17 @@ func cryptRSA(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.
 		return gfc.EncryptRSA(buf, key)
 	}
 	return nil, errors.New("invalid RSA mode (should not happen)")
+}
+
+func cryptChaCha20(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.Buffer, error) {
+	switch mode {
+	case gfc.XChaCha20_Poly1305:
+		if decrypt {
+			return gfc.DecryptXChaCha20Poly1305(buf, key)
+		}
+		return gfc.EncryptXChaCha20Poly1305(buf, key)
+	}
+	return nil, errors.New("invalid ChaCha20 mode (should not happen)")
 }
 
 // postProcess modifies the output buffer after encryption/decryption stage before gfc writes it out to outfile

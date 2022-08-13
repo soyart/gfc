@@ -5,8 +5,10 @@ type gfcError int
 const (
 	// Default
 	NoError gfcError = iota
+	// Error PBDKF2 key and salt derivation
+	ErrPBKDF2KeySalt
 	// Error invalid keyfile length (32 bytes)
-	ErrInvalidKeyfileLen
+	ErrInvalidaes256BitKeyFileLen
 	// Error CTR new cipher
 	ErrNewCipherCTR
 	// Error CTR in read loop
@@ -25,11 +27,15 @@ const (
 	ErrParsePriRSA
 	// Error RSA decrypt
 	ErrDecryptRSA
+	// Error XChaCha20Poly1305 New cipher
+	ErrNewCipherXChaCha20Poly1305
+	// Error XChaCha20Poly1305 Open
+	ErrOpenXChaCha20Poly1305
 )
 
 func (err gfcError) Error() string {
 	switch err {
-	case ErrInvalidKeyfileLen:
+	case ErrInvalidaes256BitKeyFileLen:
 		return "PBKDF2: Invalid keyfile length"
 	case ErrNewCipherCTR:
 		return "CTR: New CTR"
@@ -49,6 +55,10 @@ func (err gfcError) Error() string {
 		return "RSA: Parse Private Key"
 	case ErrDecryptRSA:
 		return "RSA: Decrypt"
+	case ErrNewCipherXChaCha20Poly1305:
+		return "XChaCha20Poly1305: New cipher"
+	case ErrOpenXChaCha20Poly1305:
+		return "XChaCha20Poly1305: Decrypt"
 	default:
 		return "bad error - should not happen"
 	}

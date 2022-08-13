@@ -18,7 +18,8 @@ import (
 func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	key, salt, err := keySaltPBKDF2(aesKey, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "key and salt error for PBKDF2 in AES-GCM encryption")
+		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
+		return nil, errors.Wrap(err, "AES256-GCM encryption")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -64,7 +65,8 @@ func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 	salt := ciphertextBytes[saltStart:]
 	key, _, err := keySaltPBKDF2(aesKey, salt)
 	if err != nil {
-		return nil, errors.Wrap(err, "key and salt error for PBKDF2 in AES-GCM decryption")
+		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
+		return nil, errors.Wrap(err, "AES256-GCM decryption")
 	}
 	nonceStart := saltStart - lenNonceGCM
 	nonce := ciphertextBytes[nonceStart:saltStart]

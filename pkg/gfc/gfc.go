@@ -13,11 +13,13 @@ const (
 	InvalidAlgorithm Algorithm = iota
 	AlgoAES
 	AlgoRSA
+	AlgoXChaCha20
 
 	InvalidAlgoMode AlgoMode = iota
 	AES_GCM
 	AES_CTR
 	RSA_OEAP
+	XChaCha20_Poly1305
 
 	NoEncoding Encoding = iota
 	Base64

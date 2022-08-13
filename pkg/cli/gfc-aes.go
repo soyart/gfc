@@ -11,10 +11,8 @@ import (
 
 type aesCommand struct {
 	baseCryptFlags
-	AesKeyFilename string `arg:"-k,--key,env:KEY" placeholder:"KEY" help:"256-bit keyfile for AES"`
-	AesMode        string `arg:"-m,--mode" default:"GCM" placeholder:"MODE" help:"AES mode"`
-
-	AesKeyFileBytes []byte `arg:"-"`
+	AesMode string `arg:"-m,--mode" default:"GCM" placeholder:"MODE" help:"AES mode"`
+	Keyfile string `arg:"-k,--key,env:KEY" placeholder:"KEY" help:"256-bit keyfile for AES"`
 }
 
 func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
@@ -29,8 +27,8 @@ func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 }
 
 func (cmd *aesCommand) key() ([]byte, error) {
-	if cmd.AesKeyFilename == "" {
+	if cmd.Keyfile == "" {
 		return nil, nil
 	}
-	return os.ReadFile(cmd.AesKeyFilename)
+	return os.ReadFile(cmd.Keyfile)
 }

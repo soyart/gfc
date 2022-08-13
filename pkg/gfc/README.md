@@ -4,10 +4,10 @@ Code in this package provides the core gfc functionality, e.g. I/O (`utils.go`),
 
 Users can import this package and use the functions defined here easily.
 
-## AES encryption
-All AES encryption functions derive key using PBKDF2 automatically. The default AES algorithm AES-GCM needs an Nonce (number once), which here is 96-bit (12-byte), and the alternative algorithm AES-CTR needs an IV (initiation vector), which in gfc is of size 128-bit (16-byte). Because PBKDF2 is used, it's important that the PBKDF2 salt is stored in the ciphertext, so that we can grab and use it during encryption. The ciphertext output format is:
+## AES and XChaCha20 encryption
+All symmestric encryption functions derive key using PBKDF2 automatically. The default AES algorithm AES-GCM, and XChaCha20-Poly1305 need an 96-bit Nonce (12-byte long), and the alternative algorithm AES-CTR needs an IV (initiation vector), which in gfc is of size 128-bit (16-byte). Because PBKDF2 is used, it's important that the PBKDF2 salt is stored in the ciphertext, so that we can grab and use it during encryption. The ciphertext output format is:
 
-    <Ciphertext> <GCM Nonce or CTR IV> <PBKDF2 Salt>
+    <Ciphertext> <GCM Nonce, XChaCha20 Nonce, or CTR IV> <PBKDF2 Salt>
 
 Salt is appended last, and during decryption, we need to extract the salt first in order to derive our PBKDF2 back from our raw key bytes. The index at which PBKDF2 salt starts is always the length of the ciphertext minus the salt length.
 
@@ -20,6 +20,5 @@ The `gfc` package uses its own custom interface `Buffer` (see `buffer.go`) to de
 		Write([]byte) (int, error)
 		ReadFrom(io.Reader) (int64, error)
 		WriteTo(io.Writer) (int64, error)
+		Bytes() []byte
 	}
-
-The 4 methods defined in the interface are meant to facilitate `main.go`'s `input()`, `crypt()`, and `output()`, as well as this package's `Encode` and `Decode`.

@@ -32,9 +32,9 @@ AES_MODE_ENUMS["CTR"]="--mode CTR";
 AES_MODE_ENUMS["GCM"]="--mode GCM";
 
 # gfc-aes only
-typeset -A AES_KEY_ENUMS;
-AES_KEY_ENUMS["Passphrase"]="";
-AES_KEY_ENUMS["Keyfile"]="--key ./assets/files/aes.key";
+typeset -A SYMMESTRIC_KEY_ENUMS;
+SYMMESTRIC_KEY_ENUMS["Passphrase"]="";
+SYMMESTRIC_KEY_ENUMS["Keyfile"]="--key ./assets/files/aes.key";
 
 typeset -A ENCODING_ENUMS;
 ENCODING_ENUMS["NoEncoding"]=""
@@ -103,7 +103,7 @@ function pipe_test() {
     line;
 }
 
-# rsa_test() loops over relevant enums for gfc-rsa and construct parameters for file_test()
+# rsa_test() loops over relevant enums for gfc-rsa and construct parameters for file_test() and pipe_test()
 function rsa_test() {
     for encoding_test in ${!ENCODING_ENUMS[@]}; do
         for compression_test in ${!COMPRESSION_ENUMS[@]}; do
@@ -133,24 +133,24 @@ function rsa_test() {
     done;
 }
 
-# aes_test() loops over relevant enums for gfc-aes and construct parameters for file_test()
+# aes_test() loops over relevant enums for gfc-aes and construct parameters for file_test() and pipe_test()
 function aes_test() {
-    for aes_key_test in ${!AES_KEY_ENUMS[@]}; do
+    for sym_key_test in ${!SYMMESTRIC_KEY_ENUMS[@]}; do
         for aes_mode_test in ${!AES_MODE_ENUMS[@]}; do
             for encoding_test in ${!ENCODING_ENUMS[@]}; do
                 for compression_test in ${!COMPRESSION_ENUMS[@]}; do
                     ((c++));
 
                     aes_mode_flag=${AES_MODE_ENUMS[$aes_mode_test]};
-                    aes_key_flag=${AES_KEY_ENUMS[$aes_key_test]}
+                    aes_key_flag=${SYMMESTRIC_KEY_ENUMS[$sym_key_test]}
                     encoding_flag=${ENCODING_ENUMS[$encoding_test]};
                     compress_flag=${COMPRESSION_ENUMS[$compression_test]};
 
-                    file_ext="${aes_mode_test}.${aes_key_test}.${encoding_test}.${compression_test}";
+                    file_ext="${aes_mode_test}.${sym_key_test}.${encoding_test}.${compression_test}";
                     enc_outfile="${TMPTEST}/gfc_aes_test.${file_ext}.bin";
                     dec_outfile="${TMPTEST}/gfc_aes_test.${file_ext}.dec";
 
-                    test_desc="AES test, mode = ${aes_mode_test}, key = ${aes_key_test}, encoding = ${encoding_test}, compresion = ${compression_test}";
+                    test_desc="AES test, mode = ${aes_mode_test}, key = ${sym_key_test}, encoding = ${encoding_test}, compresion = ${compression_test}";
                     cmd="${TEST_CMD} aes ${aes_mode_flag} ${aes_key_flag} ${encoding_flag} ${compress_flag}";
                     enc_cmd="${cmd} -i ${INFILE} -o ${enc_outfile};";
                     dec_cmd="${cmd} -d -i ${enc_outfile} -o ${dec_outfile};";
@@ -158,11 +158,47 @@ function aes_test() {
                     file_test "$c" "$test_desc" "$enc_cmd" "$dec_cmd" "${enc_outfile}" "${dec_outfile}";
 
                     # Skip pipe test if passphrase needs to be entered via stdin
-                    [ "${aes_key_test}" = "Passphrase" ] && continue;
+                    [ "${sym_key_test}" = "Passphrase" ] && continue;
 
                     pipe_test_cmd="${cmd} -i ${INFILE} | ${cmd} -d -o /dev/null;"\
                     && pipe_test "${test_num}" "${test_desc}" "${pipe_test_cmd}";
                 done;
+            done;
+        done;
+    done;
+}
+
+# cc20_test loops over all relavant enums for gfc-cc20 and construct parameters for file_test() and pipe_test()
+function cc20_test() {
+    for sym_key_test in ${!SYMMESTRIC_KEY_ENUMS[@]}; do
+        for encoding_test in ${!ENCODING_ENUMS[@]}; do
+            for compression_test in ${!COMPRESSION_ENUMS[@]}; do
+                ((c++));
+
+                # Hard-coded
+                prikey="assets/files/pri.pem";
+                pubkey="assets/files/pub.pem";
+
+                XChaCha20_key_flag=${SYMMESTRIC_KEY_ENUMS[$sym_key_test]}
+                encoding_flag=${ENCODING_ENUMS[$encoding_test]};
+                compress_flag=${COMPRESSION_ENUMS[$compression_test]};
+
+                file_ext="${encoding_test}.${compression_test}";
+                enc_outfile="${TMPTEST}/gfc_rsa_test.${file_ext}.bin";
+                dec_outfile="${TMPTEST}/gfc_rsa_test.${file_ext}.dec";
+
+                test_desc="XChaCha20 test, key = ${sym_key_test}, encoding = ${encoding_test}, compresion = ${compression_test}";
+                cmd="${TEST_CMD} cc20 ${XChaCha20_key_flag} ${encoding_flag} ${compress_flag}";
+                enc_cmd="${cmd} -i ${INFILE} -o ${enc_outfile};";
+                dec_cmd="${cmd} -d -i ${enc_outfile} -o ${dec_outfile};";
+
+                file_test "$c" "$test_desc" "$enc_cmd" "$dec_cmd" "${enc_outfile}" "${dec_outfile}";
+                
+                # Skip pipe test if passphrase needs to be entered via stdin
+                [ "${sym_key_test}" = "Passphrase" ] && continue;
+                
+                pipe_test_cmd="${cmd} cc20 -i ${INFILE} | ${cmd} -d -o /dev/null;"\
+                pipe_test "${test_num}" "${test_desc}" "${pipe_test_cmd}";
             done;
         done;
     done;
@@ -178,3 +214,8 @@ printf "Caution: RSA is a public key cryptographic algorithm - it can only encry
 simyn "Test gfc-aes?"\
 && c=0\
 && aes_test;
+
+# XChaCha20Poly1305 tests
+simyn "Test gfc-cc20?"\
+&& c=0\
+&& cc20_test;

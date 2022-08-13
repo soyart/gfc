@@ -21,7 +21,8 @@ import (
 func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	key, salt, err := keySaltPBKDF2(aesKey, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "error new key and salt for PBKDF2 in AES-CTR encryption")
+		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
+		return nil, errors.Wrap(err, "AES256-CTR encryption")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -69,8 +70,10 @@ func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 	salt := ciphertextBytes[saltStart:]
 	key, _, err := keySaltPBKDF2(aesKey, salt)
 	if err != nil {
-		return nil, errors.Wrap(err, "error new key and salt for PBKDF2 in AES-CTR decryption")
+		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
+		return nil, errors.Wrap(err, "AES256-CTR decryption")
 	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherCTR.Error())

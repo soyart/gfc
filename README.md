@@ -7,11 +7,13 @@ gfc is a minimal encryption CLI tool designed to be versatile and easy to use. T
 gfc can encrypt any files which the user has read access to (except for RSA, which can only encrypt a small messages), as well as stdin.
 ## Features
 
-- AES256-GCM and AES256-CTR encryption/decryption
+- AES256-GCM and AES256-CTR encryption
 
-- RSA-OEAP SHA512 encryption/decryption
+- XChaCha20-Poly1305 encryption
 
-- PBKDF2 passphrase hash derivation
+- RSA-OEAP SHA512 encryption
+
+- PBKDF2 passphrase hash derivation for symmestric cryptography
 
 - ZSTD compression
 
@@ -32,7 +34,7 @@ Build `gfc` executable from source with `go build`:
     $ cp gfc ~/bin/.    # copy gfc to $PATH 
 
 ## Generating gfc encryption keys
-#### Generating AES keys for gfc
+#### Generating keys for AES or XChaCha20 encryption
 
 To generate a new AES key, I usually use `dd(1)` write 32 bytes of random character to a file:
 
@@ -72,6 +74,8 @@ Algorithm mode:
 
 - RSA: RSA256-OEAP (only one is supported)
 
+- ChaCha20: XChaCha-Poly1305 (only one is supported)
+
 Encoding: None
 
 Compression: None
@@ -83,6 +87,7 @@ gfc has 2 subcommands - `aes` for AES encryption, and `rsa` for RSA encryption. 
 
     $ gfc aes -h; # See help for gfc-aes
     $ gfc rsa -h; # See help for gfc-rsa
+    $ gfc-cc20 -h; # See help for gfc-cc20
 
 ### General arguments/flags
 #### Input and output
@@ -117,11 +122,14 @@ Similar to encoding, we can enable ZSTD compression with flag `-c` or `--compres
     $ gfc aes --compress -i plain.txt -k mykey -e hex | gfc aes --compress -d -k mykey -e hex;
 
 #### Encryption key
-##### AES
-In gfc-aes, we can specify key filename to use with `-k <KEYFILE>` or `--key <KEYFILE>`. The key must be 256-bit, i.e. 32-byte long. If the key argument is omitted, a user-supplied passphrase will be used to derive an encryption key using PDKDF2.
+##### AES and XChaCha20
+In `gfc-aes` and `gfc-cc20`, we can specify key filename to use with `-k <KEYFILE>` or `--key <KEYFILE>`. The key must be 256-bit, i.e. 32-byte long. If the key argument is omitted, a user-supplied passphrase will be used to derive an encryption key using PDKDF2.
 
     $ # gfc will read key from ~/.secret/mykey and uses it to encrypt plain.txt to out.bin;
     $ gfc aes -k ~/.secret/mykey -i plain.txt -o out.bin;
+    $
+    $ # The same as above, but XChaCha20-Poly1305 is used
+    $ gfc cc20 -k ~/.secret/mykey -i plain.txt -o out.bin;
 
 ##### RSA
 It's quite tricky to specify RSA key in the command line, since the keypairs are usually long and multi-lined. As a result, we should leverage the power of UNIX shell to read keyfiles for us. The syntax for this is `"$(< FILENAME)"`, where the shell reads the file for us and gives us the content string.

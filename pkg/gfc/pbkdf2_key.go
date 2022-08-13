@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	pbkdf2Rounds  int = 1 << 20 // PBKDF2 pbkdf2Rounds
-	lenPBKDF2Salt int = 32
-	keyFileLen    int = 32
+	pbkdf2Rounds        int = 1 << 20 // PBKDF2 pbkdf2Rounds
+	lenPBKDF2Salt       int = 32
+	aes256BitKeyFileLen int = 32
 )
 
 func getPass() []byte {
@@ -44,8 +44,8 @@ func generateKeySaltPBKDF2(passphrase []byte, salt []byte) ([]byte, []byte) {
 func keySaltPBKDF2(aesKey []byte, salt []byte) ([]byte, []byte, error) {
 	if aesKey != nil {
 		keyLen := len(aesKey)
-		if keyLen != keyFileLen {
-			return nil, nil, errors.Wrapf(ErrInvalidKeyfileLen, "keyfile length is %d", keyLen)
+		if keyLen != aes256BitKeyFileLen {
+			return nil, nil, errors.Wrapf(ErrInvalidaes256BitKeyFileLen, "keyfile length is %d", keyLen)
 		}
 		// If salt is new (encryption), generate new salt
 		salt = generateSaltPBKDF2(salt)

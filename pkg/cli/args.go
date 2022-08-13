@@ -18,8 +18,9 @@ type baseCryptFlags struct {
 }
 
 type Args struct {
-	AESCommand *aesCommand `arg:"subcommand:aes"`
-	RSACommand *rsaCommand `arg:"subcommand:rsa"`
+	AESCommand       *aesCommand      `arg:"subcommand:aes"`
+	RSACommand       *rsaCommand      `arg:"subcommand:rsa"`
+	XChaCha20Command *ChaCha20Command `arg:"subcommand:cc20"`
 }
 
 func infile(fname string, isText bool) (*os.File, error) {

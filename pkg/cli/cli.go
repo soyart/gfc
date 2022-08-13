@@ -11,6 +11,12 @@ import (
 	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
+type Args struct {
+	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption"`
+	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption"`
+	XChaCha20Command *chaCha20Command `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption1"`
+}
+
 // aesCommand and rsaCommand implement this interface
 type Command interface {
 	infile() (*os.File, error)
@@ -21,24 +27,20 @@ type Command interface {
 	algoMode() (gfc.AlgoMode, error)
 	encoding() gfc.Encoding
 	key() ([]byte, error)
+	crypt(gfc.AlgoMode, gfc.Buffer, []byte, bool) (gfc.Buffer, error)
 }
 
 func (a *Args) Handle() error {
 	var cmd Command
-	var algo gfc.Algorithm
 	switch {
 	case a.AESCommand != nil:
 		cmd = a.AESCommand
-		algo = gfc.AlgoAES
 	case a.RSACommand != nil:
 		cmd = a.RSACommand
-		algo = gfc.AlgoRSA
 	case a.XChaCha20Command != nil:
 		cmd = a.XChaCha20Command
-		algo = gfc.AlgoXChaCha20
 	default:
-		gfc.Write(os.Stderr, "missing subcommand: see gfc --help\n")
-		os.Exit(1)
+		return errors.New("missing subcommand: see gfc --help")
 	}
 
 	isTextInput := cmd.isText()
@@ -89,7 +91,7 @@ func (a *Args) Handle() error {
 		return errors.Wrap(err, "input preprocessing failed")
 	}
 
-	buf, err = crypt(buf, key, decrypt, algo, mode)
+	buf, err = cmd.crypt(mode, buf, key, decrypt)
 	if err != nil {
 		return errors.Wrap(err, "cryptography error")
 	}
@@ -161,62 +163,6 @@ func preProcess(buf gfc.Buffer, decrypt bool, encoding gfc.Encoding, compress bo
 		}
 	}
 	return buf, nil
-}
-
-// crypt wraps cryptAES and cryptRSA
-func crypt(buf gfc.Buffer, key []byte, decrypt bool, algo gfc.Algorithm, mode gfc.AlgoMode) (gfc.Buffer, error) {
-	switch algo {
-	case gfc.AlgoAES:
-		return cryptAES(buf, key, decrypt, mode)
-	case gfc.AlgoRSA:
-		return cryptRSA(buf, key, decrypt, mode)
-	case gfc.AlgoXChaCha20:
-		return cryptChaCha20(buf, key, decrypt, mode)
-	}
-	return nil, errors.New("invalid crypto algorithm")
-}
-
-func cryptAES(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.Buffer, error) {
-	switch mode {
-	case gfc.AES_GCM:
-		if decrypt {
-			return gfc.DecryptGCM(buf, key)
-		}
-		return gfc.EncryptGCM(buf, key)
-	case gfc.AES_CTR:
-		if decrypt {
-			return gfc.DecryptCTR(buf, key)
-		}
-		return gfc.EncryptCTR(buf, key)
-	}
-	return nil, errors.New("invalid AES mode (should not happen)")
-}
-
-func cryptRSA(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.Buffer, error) {
-	switch mode {
-	case gfc.RSA_OEAP:
-		if decrypt {
-			return gfc.DecryptRSA(buf, key)
-		}
-		return gfc.EncryptRSA(buf, key)
-	}
-	return nil, errors.New("invalid RSA mode (should not happen)")
-}
-
-func cryptChaCha20(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.Buffer, error) {
-	switch mode {
-	case gfc.XChaCha20_Poly1305:
-		if decrypt {
-			return gfc.DecryptXChaCha20Poly1305(buf, key)
-		}
-		return gfc.EncryptXChaCha20Poly1305(buf, key)
-	case gfc.ChaCha20_Poly1305:
-		if decrypt {
-			return gfc.DecryptChaCha20Poly1305(buf, key)
-		}
-		return gfc.EncryptChaCha20Poly1305(buf, key)
-	}
-	return nil, errors.New("invalid ChaCha20 mode (should not happen)")
 }
 
 // postProcess modifies the output buffer after encryption/decryption stage before gfc writes it out to outfile

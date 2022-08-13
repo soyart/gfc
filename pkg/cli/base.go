@@ -7,7 +7,9 @@ import (
 	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
-// baseCryptFlags represents the shared gfc CLI flags between AES and RSA subcommands.
+// baseCryptFlags represents the shared gfc CLI flags between subcommands.
+// If you are adding a new algorithm, you don't have to use baseCryptFlags,
+// just implement Command interface with any means.
 type baseCryptFlags struct {
 	DecryptFlag  bool   `arg:"-d,--decrypt" default:"false" help:"Decrypt mode"`
 	StdinText    bool   `arg:"-t,--text" default:"false" help:"Enter a text line manually to stdin"`
@@ -15,12 +17,6 @@ type baseCryptFlags struct {
 	InfileFlag   string `arg:"-i,--infile" placeholder:"IN" help:"Input filename, stdin will be used if omitted"`
 	EncodingFlag string `arg:"-e,--encoding" placeholder:"ENC" help:"'base64' or 'hex' encoding for input or output"`
 	OutfileFlag  string `arg:"-o,--outfile" placeholder:"OUT" help:"Output filename, stdout will be used if omitted"`
-}
-
-type Args struct {
-	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption"`
-	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption"`
-	XChaCha20Command *ChaCha20Command `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption1"`
 }
 
 func infile(fname string, isText bool) (*os.File, error) {

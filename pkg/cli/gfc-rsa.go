@@ -41,3 +41,19 @@ func (cmd *rsaCommand) key() ([]byte, error) {
 	}
 	return []byte(cmd.PubKey), nil
 }
+
+func (cmd *rsaCommand) crypt(
+	mode gfc.AlgoMode,
+	buf gfc.Buffer,
+	key []byte,
+	decrypt bool,
+) (gfc.Buffer, error) {
+	switch mode {
+	case gfc.RSA_OEAP:
+		if decrypt {
+			return gfc.DecryptRSA(buf, key)
+		}
+		return gfc.EncryptRSA(buf, key)
+	}
+	return nil, errors.New("invalid RSA mode (should not happen)")
+}

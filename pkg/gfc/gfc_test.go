@@ -16,8 +16,8 @@ func TestCryptography(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error filling random key bytes: %s", err.Error())
 		}
-		testSymmestricCryptograhy(t, "AES256-GCM", EncryptGCM, DecryptGCM, plaintext, key)
-		testSymmestricCryptograhy(t, "AES256-CTR", EncryptCTR, DecryptCTR, plaintext, key)
+		testSymmetricCryptograhy(t, "AES256-GCM", EncryptGCM, DecryptGCM, plaintext, key)
+		testSymmetricCryptograhy(t, "AES256-CTR", EncryptCTR, DecryptCTR, plaintext, key)
 	})
 	t.Run("testRSA", func(t *testing.T) {
 		pubFile := "./assets/files/pub.pem"
@@ -34,7 +34,7 @@ func TestCryptography(t *testing.T) {
 			t.SkipNow()
 		}
 
-		testAsymmestricCryptograhy(t, "RSA256-OEAP", EncryptRSA, DecryptRSA, plaintext, priPEM, pubPEM)
+		testAsymmetricCryptograhy(t, "RSA256-OEAP", EncryptRSA, DecryptRSA, plaintext, priPEM, pubPEM)
 	})
 	t.Run("testXChaCha20Poly1305", func(t *testing.T) {
 		key := make([]byte, aes256BitKeyFileLen)
@@ -42,11 +42,12 @@ func TestCryptography(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error filling random key bytes: %s", err.Error())
 		}
-		testSymmestricCryptograhy(t, "XChaCha20Poly1305", EncryptXChaCha20Poly1305, DecryptXChaCha20Poly1305, plaintext, key)
+		testSymmetricCryptograhy(t, "XChaCha20Poly1305", EncryptXChaCha20Poly1305, DecryptXChaCha20Poly1305, plaintext, key)
+		testSymmetricCryptograhy(t, "ChaCha20Poly1305", EncryptChaCha20Poly1305, DecryptChaCha20Poly1305, plaintext, key)
 	})
 }
 
-func testSymmestricCryptograhy(
+func testSymmetricCryptograhy(
 	t *testing.T,
 	name string,
 	encryptFunc func(Buffer, []byte) (Buffer, error),
@@ -68,7 +69,7 @@ func testSymmestricCryptograhy(
 	}
 }
 
-func testAsymmestricCryptograhy(
+func testAsymmetricCryptograhy(
 	t *testing.T,
 	name string,
 	encryptFunc func(Buffer, []byte) (Buffer, error),

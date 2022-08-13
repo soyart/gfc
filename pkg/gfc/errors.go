@@ -7,6 +7,8 @@ const (
 	NoError gfcError = iota
 	// Error PBDKF2 key and salt derivation
 	ErrPBKDF2KeySalt
+	// Error unmarshaling gfc symmetric key output
+	ErrUnmarshalSymmAEAD
 	// Error invalid keyfile length (32 bytes)
 	ErrInvalidaes256BitKeyFileLen
 	// Error CTR new cipher
@@ -35,30 +37,34 @@ const (
 
 func (err gfcError) Error() string {
 	switch err {
+	case ErrPBKDF2KeySalt:
+		return "PBDKF2 error: key and salt"
+	case ErrUnmarshalSymmAEAD:
+		return "error: failed to unmarshal gfc symmetric key cryptography output"
 	case ErrInvalidaes256BitKeyFileLen:
-		return "PBKDF2: Invalid keyfile length"
+		return "PBKDF2 error: invalid keyfile length"
 	case ErrNewCipherCTR:
-		return "CTR: New CTR"
+		return "AES-CTR error: new CTR"
 	case ErrReadCTR:
-		return "CTR: Read Buffer"
+		return "AES-CTR error: read Buffer"
 	case ErrNewCipherGCM:
-		return "GCM: New cipher"
+		return "AES-GCM error: new cipher"
 	case ErrNewGCM:
-		return "GCM: New GCM"
+		return "AES-GCM error: new GCM"
 	case ErrOpenGCM:
-		return "GCM: Open"
+		return "AES-GCM error: open"
 	case ErrParsePubRSA:
-		return "RSA: Parse Public Key"
+		return "RSA error: parse public key"
 	case ErrEncryptRSA:
-		return "RSA: Encrypt"
+		return "RSA error: encrypt"
 	case ErrParsePriRSA:
-		return "RSA: Parse Private Key"
+		return "RSA error: parse Private Key"
 	case ErrDecryptRSA:
-		return "RSA: Decrypt"
+		return "RSA error: decrypt"
 	case ErrNewCipherXChaCha20Poly1305:
-		return "XChaCha20Poly1305: New cipher"
+		return "XChaCha20-Poly1305/ChaCha20-Poly1305 error: new cipher"
 	case ErrOpenXChaCha20Poly1305:
-		return "XChaCha20Poly1305: Decrypt"
+		return "XChaCha20-Poly1305/ChaCha20-Poly1305 error: decrypt"
 	default:
 		return "bad error - should not happen"
 	}

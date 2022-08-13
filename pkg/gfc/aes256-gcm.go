@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 
 	"github.com/pkg/errors"
 )
@@ -25,68 +24,32 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherGCM.Error())
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewGCM.Error())
 	}
 
-	nonce := make([]byte, lenNonceGCM)
-	rand.Read(nonce)
-
-	var plaintextBytes []byte
-	switch plaintext := plaintext.(type) {
-	case *bytes.Buffer:
-		plaintextBytes = plaintext.Bytes()
-	}
-
-	// To encrypt, we use Seal(dst, nonce, plaintext, data []byte) []byte
-	ciphertext := new(bytes.Buffer)
-	ciphertext.Write(gcm.Seal(nil, nonce, plaintextBytes, nil))
-	ciphertext.Write(append(nonce, salt...))
-
-	// salt is appended last, hence output format is
-	// "ciphertext + nonce + salt".
-	// This allow us to easily extract salt
-	// for key derivation later when decrypting.
-
-	return ciphertext, nil
+	return marshalGfcSymmAEAD(gcm, plaintext, lenNonceGCM, salt)
 }
 
 func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	var ciphertextBytes []byte
-	switch ciphertext := ciphertext.(type) {
-	case *bytes.Buffer:
-		ciphertextBytes = ciphertext.Bytes()
-	}
-
-	lenGfcCiphertext := len(ciphertextBytes)
-	saltStart := lenGfcCiphertext - lenPBKDF2Salt
-	salt := ciphertextBytes[saltStart:]
-	key, _, err := keySaltPBKDF2(aesKey, salt)
+	ciphertextBytes, key, nonce, err := unmarshalGfcSymmAEAD(ciphertext, aesKey, lenNonceGCM)
 	if err != nil {
-		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
-		return nil, errors.Wrap(err, "AES256-GCM decryption")
+		return nil, errors.Wrap(err, ErrUnmarshalSymmAEAD.Error())
 	}
-	nonceStart := saltStart - lenNonceGCM
-	nonce := ciphertextBytes[nonceStart:saltStart]
-	ciphertextBytes = ciphertextBytes[:nonceStart]
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherGCM.Error())
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewGCM.Error())
 	}
-
 	/* To decrypt, we use Open(dst, nonce, ciphertext, ciphertext []byte) ([]byte, error) */
-	plaintextRaw, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
+	plaintext, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrOpenGCM.Error())
 	}
-	plaintext := bytes.NewBuffer(plaintextRaw)
-	return plaintext, nil
+	return bytes.NewBuffer(plaintext), nil
 }

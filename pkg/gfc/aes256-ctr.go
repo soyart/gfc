@@ -59,12 +59,8 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 }
 
 func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	var ciphertextBytes []byte
-	switch ciphertext := ciphertext.(type) {
-	case *bytes.Buffer:
-		ciphertextBytes = ciphertext.Bytes()
-	}
-	lenGfcCiphertext := len(ciphertextBytes)
+	ciphertextBytes := ciphertext.Bytes()
+	lenGfcCiphertext := ciphertext.Len()
 
 	saltStart := lenGfcCiphertext - lenPBKDF2Salt
 	salt := ciphertextBytes[saltStart:]

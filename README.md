@@ -2,18 +2,18 @@
 
 gfc is my first programming project, written the first day I learned Go. I intend to learn Go from its development, so expect some bad code.
 
-gfc is a minimal encryption CLI tool designed to be versatile and easy to use. This package provides an executable (`cmd/gfc`), and a library (`pkg/gfc`) providing high-level wrapper for AES256-GCM, AES256-CTR, and RSA256-OEAP.
+gfc is a minimal encryption CLI tool designed to be versatile and easy to use. This package provides an executable (`cmd/gfc`), and a library (`pkg/gfc`) providing high-level wrapper for AES256-GCM, AES256-CTR, RSA256-OEAP, ChaCha20-Poly1305, XChaCha20-Poly1305.
 
 gfc can encrypt any files which the user has read access to (except for RSA, which can only encrypt a small messages), as well as stdin.
 ## Features
 
 - AES256-GCM and AES256-CTR encryption
 
-- XChaCha20-Poly1305 encryption
+- XChaCha20-Poly1305, and ChaCha20-Poly1305 encryption
 
 - RSA-OEAP SHA512 encryption
 
-- PBKDF2 passphrase hash derivation for symmestric cryptography
+- PBKDF2 passphrase hash derivation for symmetric cryptography
 
 - ZSTD compression
 
@@ -34,7 +34,7 @@ Build `gfc` executable from source with `go build`:
     $ cp gfc ~/bin/.    # copy gfc to $PATH 
 
 ## Generating gfc encryption keys
-#### Generating keys for AES or XChaCha20 encryption
+#### Generating symmetric key for AES or ChaCha20 encryption
 
 To generate a new AES key, I usually use `dd(1)` write 32 bytes of random character to a file:
 
@@ -44,7 +44,7 @@ I'm too lazy to add deterministic keyfile hasher, so gfc will assume that the ke
 
 > In any cases, users should replace the test file `gfc/files/aes.key` included in this repository.
 
-#### Generating RSA key pair for gfc with OpenSSL
+#### Generating RSA keypair for gfc with OpenSSL
 
 First, you create a private key. In this case, it will be 4096-byte long with name `pri.pem`:
 
@@ -60,27 +60,27 @@ Passphrases will be securely hashed using PBKDF2, which added random number _sal
 
 To decrypt files encrypted with key derived from a passphrase, that same _salt_ is needed in order to convert input passphrase into the key used to encrypt it in the first place.
 
-Key and salt handling is in `pkg/gfc/key.go`.
+Key and salt handling is in `pkg/gfc/pbkdf2.go`.
 
 ## Usage
 ### Defaults
-Input file: stdin
+Default infile: stdin
 
-Output file: stdout
+Default outfile: stdout
 
-Algorithm mode:
+Default encryption mode:
 
 - AES: AES256-GCM
 
+- ChaCha20: XChaCha-Poly1305
+
 - RSA: RSA256-OEAP (only one is supported)
 
-- ChaCha20: XChaCha-Poly1305 (only one is supported)
+Default encoding: None
 
-Encoding: None
+Default compression: None
 
-Compression: None
-
-Key source (AES only): Passphrase
+Default key source (symmetric key cryptography only): Passphrase
 
 ### Help
 gfc has 2 subcommands - `aes` for AES encryption, and `rsa` for RSA encryption. To see help for each subcommand, just run:
@@ -178,20 +178,6 @@ Or with xz compression:
 
 In addition to Go unit tests, Bash scripts `gfc_test.sh` is shipped with gfc and can be use to test a combination of commands.
 
-## Known issues for gfc-og
-
-- Memory usage
-
-Due to how gfc uses encryption and converison buffers, gfc can use large chunks of memory when encrypting and decrypting large files, and even more so when converting to and from hexadecimals.
-
-- Bad error detection
-
-Other than the standard `"flag"` package, gfc does not have any command-line error checking built-in, so if you enter the command incorrectly, gfc may fail silently.
-
-For now, gfc's exit status of `1` indicate user error (e.g. files unreadable/unwritable, or key file is too small), while `2` indicates internal error. Cryptography failures will cause panic.
-
-- Unstable spec
-
 ## Repositories
 
 There are 2 repositories for gfc, one on GitHub.com and one on GitLab.com
@@ -208,7 +194,7 @@ imported for a proper, secure passphrase prompt
 
 - `"golang.org/x/crypto"`
 
-imported for [AES 256](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) encryption
+imported for cryptographic ciphers, e.g. AES and ChaCha20
 
 - `"golang.org/x/crypto/pbkdf2"`
 

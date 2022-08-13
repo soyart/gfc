@@ -174,18 +174,16 @@ func crypt(buf gfc.Buffer, key []byte, decrypt bool, algo gfc.Algorithm, mode gf
 }
 
 func cryptAES(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) (gfc.Buffer, error) {
-	if decrypt {
-		switch mode {
-		case gfc.AES_GCM:
-			return gfc.DecryptGCM(buf, key)
-		case gfc.AES_CTR:
-			return gfc.DecryptCTR(buf, key)
-		}
-	}
 	switch mode {
 	case gfc.AES_GCM:
+		if decrypt {
+			return gfc.DecryptGCM(buf, key)
+		}
 		return gfc.EncryptGCM(buf, key)
 	case gfc.AES_CTR:
+		if decrypt {
+			return gfc.DecryptCTR(buf, key)
+		}
 		return gfc.EncryptCTR(buf, key)
 	}
 	return nil, errors.New("invalid AES mode (should not happen)")
@@ -209,6 +207,11 @@ func cryptChaCha20(buf gfc.Buffer, key []byte, decrypt bool, mode gfc.AlgoMode) 
 			return gfc.DecryptXChaCha20Poly1305(buf, key)
 		}
 		return gfc.EncryptXChaCha20Poly1305(buf, key)
+	case gfc.ChaCha20_Poly1305:
+		if decrypt {
+			return gfc.DecryptChaCha20Poly1305(buf, key)
+		}
+		return gfc.EncryptChaCha20Poly1305(buf, key)
 	}
 	return nil, errors.New("invalid ChaCha20 mode (should not happen)")
 }

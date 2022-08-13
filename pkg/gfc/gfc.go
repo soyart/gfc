@@ -20,6 +20,7 @@ const (
 	AES_CTR
 	RSA_OEAP
 	XChaCha20_Poly1305
+	ChaCha20_Poly1305
 
 	NoEncoding Encoding = iota
 	Base64

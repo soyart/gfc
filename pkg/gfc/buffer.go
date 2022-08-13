@@ -9,5 +9,6 @@ type Buffer interface {
 	io.Writer
 	io.ReaderFrom
 	io.WriterTo
+	Len() int
 	Bytes() []byte
 }

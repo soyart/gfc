@@ -22,6 +22,8 @@ function is_verbose() {
 . "$(command -v lb.sh)" || printf "%s\n" "error: missing lb.sh - get it from https://gitlab.com/artnoi/unix/-/tree/main/sh-tools/bin";
 
 TMPTEST="tmptest";
+mkdir -p "${TEMPTEST}";
+
 TEST_CMD="go run ./cmd/gfc";
 
 # gfc-aes only

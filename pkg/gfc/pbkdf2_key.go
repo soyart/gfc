@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"os"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 )
@@ -44,7 +45,7 @@ func keySaltPBKDF2(aesKey []byte, salt []byte) ([]byte, []byte, error) {
 	if aesKey != nil {
 		keyLen := len(aesKey)
 		if keyLen != keyFileLen {
-			return nil, nil, ErrInvalidKeyfileLen
+			return nil, nil, errors.Wrapf(ErrInvalidKeyfileLen, "keyfile length is %d", keyLen)
 		}
 		// If salt is new (encryption), generate new salt
 		salt = generateSaltPBKDF2(salt)

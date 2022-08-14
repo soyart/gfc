@@ -15,15 +15,15 @@ var (
 	ErrMissingSubcommand = errors.New("missing subcommand")
 )
 
-// Args represent the actual top-level gfc command.
-type Args struct {
+// Gfc represent the actual top-level gfc command.
+type Gfc struct {
 	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption"`
 	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption"`
 	XChaCha20Command *chaCha20Command `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption1"`
 }
 
-// aesCommand and rsaCommand implement this interface
-type Command interface {
+// All subcommands must implement this interface
+type subcommand interface {
 	// baseCryptFlags methods have default implementation done by *baseCryptFlags.
 	// If an algorithm embeds *baseCryptFlags, these methods should already be inherited.
 	// You can override these methods with your own algorithm implementation.
@@ -45,8 +45,8 @@ type Command interface {
 	crypt(mode gfc.AlgoMode, buf gfc.Buffer, key []byte, decrypt bool) (gfc.Buffer, error)
 }
 
-func (a *Args) RunCLI() error {
-	var cmd Command
+func (a *Gfc) RunCLI() error {
+	var cmd subcommand
 	switch {
 	case a.AESCommand != nil:
 		cmd = a.AESCommand

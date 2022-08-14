@@ -11,10 +11,10 @@ import (
 )
 
 func main() {
-	var args = new(cli.Args)
-	arg.MustParse(args)
+	var gfcCli = new(cli.Gfc)
+	arg.MustParse(gfcCli)
 
-	if err := args.RunCLI(); err != nil {
+	if err := gfcCli.RunCLI(); err != nil {
 		if errors.Is(err, cli.ErrMissingSubcommand) {
 			gfc.Write(os.Stderr, err.Error()+": see gfc --help\n")
 			os.Exit(1)

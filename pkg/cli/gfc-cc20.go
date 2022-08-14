@@ -4,8 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/artnoi43/gfc/pkg/gfc"
 	"github.com/pkg/errors"
+
+	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
 type chaCha20Command struct {

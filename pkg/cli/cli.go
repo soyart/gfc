@@ -11,6 +11,10 @@ import (
 	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
+var (
+	ErrMissingSubcommand = errors.New("missing subcommand")
+)
+
 // Args represent the actual top-level gfc command.
 type Args struct {
 	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption"`
@@ -51,7 +55,7 @@ func (a *Args) RunCLI() error {
 	case a.XChaCha20Command != nil:
 		cmd = a.XChaCha20Command
 	default:
-		return errors.New("missing subcommand: see gfc --help")
+		return ErrMissingSubcommand
 	}
 
 	isTextInput := cmd.isText()

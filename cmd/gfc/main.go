@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	"github.com/alexflint/go-arg"
@@ -14,6 +15,10 @@ func main() {
 	arg.MustParse(args)
 
 	if err := args.RunCLI(); err != nil {
+		if errors.Is(err, cli.ErrMissingSubcommand) {
+			gfc.Write(os.Stderr, err.Error()+": see gfc --help\n")
+			os.Exit(1)
+		}
 		gfc.Write(os.Stderr, "error: "+err.Error()+"\n")
 		os.Exit(2)
 	}

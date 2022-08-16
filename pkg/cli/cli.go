@@ -23,7 +23,7 @@ type Gfc struct {
 // All subcommands must implement this interface
 type subcommand interface {
 	// baseCryptFlags methods have default implementation done by *baseCryptFlags.
-	// If an algorithm embeds *baseCryptFlags, these methods should already be inherited.
+	// If an algorithm embeds baseCryptFlags, these methods should already be inherited.
 	// You can override these methods with your own algorithm implementation.
 
 	infile() (string, *os.File, error) // infile returns file pointer to the infile

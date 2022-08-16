@@ -10,20 +10,22 @@ import (
 )
 
 type aesCommand struct {
-	baseCryptFlags
 	AesMode string `arg:"-m,--mode" default:"GCM" placeholder:"MODE" help:"AES mode"`
 	Keyfile string `arg:"-k,--key,env:KEY" placeholder:"KEY" help:"256-bit keyfile for AES"`
+
+	baseCryptFlags
 }
 
 func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
-	mode := cmd.AesMode
-	switch {
-	case strings.EqualFold(mode, "GCM"):
+	mode := strings.ToUpper(cmd.AesMode)
+	switch mode {
+	case "GCM":
 		return gfc.AES_GCM, nil
-	case strings.EqualFold(mode, "CTR"):
+	case "CTR":
 		return gfc.AES_CTR, nil
 	}
-	return gfc.InvalidAlgoMode, errors.New("unknown AES mode: " + mode)
+
+	return gfc.InvalidAlgoMode, errors.Wrapf(ErrInvalidModeAES, "unknown mode %s", cmd.AesMode)
 }
 
 func (cmd *aesCommand) key() ([]byte, error) {

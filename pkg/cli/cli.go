@@ -3,23 +3,21 @@ package cli
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"os"
+	"path"
 
 	"github.com/pkg/errors"
 
 	"github.com/artnoi43/gfc/pkg/gfc"
 )
 
-var (
-	ErrMissingSubcommand = errors.New("missing subcommand")
-)
-
 // Gfc represent the actual top-level gfc command.
 type Gfc struct {
-	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption"`
-	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption"`
-	XChaCha20Command *chaCha20Command `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption1"`
+	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption: see 'gfc aes --help'"`
+	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption: see 'gfc rsa --help'"`
+	XChaCha20Command *chaCha20Command `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption: see 'gfc cc20 --help'"`
 }
 
 // All subcommands must implement this interface
@@ -28,13 +26,13 @@ type subcommand interface {
 	// If an algorithm embeds *baseCryptFlags, these methods should already be inherited.
 	// You can override these methods with your own algorithm implementation.
 
-	infile() (*os.File, error)       // infile returns file pointer to the infile
-	outfile() (*os.File, error)      // outfile returns file pointer to the outfile
-	decrypt() bool                   // decrypt returns if user specified decryption operation
-	isText() bool                    // isText checks if user wants to manually input text from console prompt
-	compression() bool               // compression checks if user wants to include ZSTD in the pipeline
-	algoMode() (gfc.AlgoMode, error) // algoMode  checks if user specified invalid mode before attempting to read file
-	encoding() gfc.Encoding          // encoding returns if user wants to apply encoding to the pipeline, and if so, which one
+	infile() (string, *os.File, error) // infile returns file pointer to the infile
+	outfile() string                   // outfile returns outfile filename
+	decrypt() bool                     // decrypt returns if user specified decryption operation
+	isText() bool                      // isText checks if user wants to manually input text from console prompt
+	compression() bool                 // compression checks if user wants to include ZSTD in the pipeline
+	algoMode() (gfc.AlgoMode, error)   // algoMode  checks if user specified invalid mode before attempting to read file
+	encoding() gfc.Encoding            // encoding returns if user wants to apply encoding to the pipeline, and if so, which one
 
 	// Algorithm methods - not defined in *baseCryptFlags
 
@@ -45,7 +43,8 @@ type subcommand interface {
 	crypt(mode gfc.AlgoMode, buf gfc.Buffer, key []byte, decrypt bool) (gfc.Buffer, error)
 }
 
-func (a *Gfc) RunCLI() error {
+// TODO: Extract outfile validation and write into own functions?
+func (a *Gfc) Run() error {
 	var cmd subcommand
 	switch {
 	case a.AESCommand != nil:
@@ -58,40 +57,60 @@ func (a *Gfc) RunCLI() error {
 		return ErrMissingSubcommand
 	}
 
-	isTextInput := cmd.isText()
-	// infile is closed by readInput
-	infile, err := cmd.infile()
+	mode, err := cmd.algoMode()
 	if err != nil {
-		return errors.Wrapf(err, "failed to read infile")
+		return errors.Wrap(err, "invalid algorithm mode")
 	}
 	key, err := cmd.key()
 	if err != nil {
 		return errors.Wrapf(err, "failed to read key")
 	}
-	// outfile is closed in this function after writing to it by using defer statement.
-	outfile, err := cmd.outfile()
-	if err != nil {
-		return errors.Wrapf(err, "failed to open outfile")
-	}
-	closeOutfile := func() {
-		if outfile != os.Stdout {
-			if err := outfile.Close(); err != nil {
-				gfc.Write(os.Stderr, "failed to close outfile: "+outfile.Name()+"\n")
-			}
-		}
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			gfc.Write(os.Stderr, "panic recovered\n")
-			closeOutfile()
-		}
-	}()
-	defer closeOutfile()
+	isTextInput := cmd.isText()
 
-	mode, err := cmd.algoMode()
+	// infile is opened early so we know sooner if it's bad.
+	// The file pointer is closed by readInput.
+	infileName, infile, err := cmd.infile()
 	if err != nil {
-		return errors.Wrap(err, "invalid algorithm mode")
+		return errors.Wrapf(err, "failed to read infile")
 	}
+	if infile != os.Stdin {
+		infileInfo, err := os.Stat(infileName)
+		if err != nil {
+			return errors.Wrap(err, "failed to read infile metadata")
+		}
+		if infileInfo.IsDir() {
+			return wrapErrFilename(ErrFileIsDir, infileName)
+		}
+	}
+
+	// outfile is opened (created) late in this function, just before the final writes
+	// so that we don't have hanging file pointer opened for too long before it is written.
+	var outfile *os.File
+	// True if outfile is (1) not stdout (2) not dir (3) user writable
+	var outfileGoodFile bool
+	// Validates outfile and returns error before attempting to do anything expensive
+	outfileName := cmd.outfile()
+	if outfileName != "" {
+		outfileDir := path.Dir(outfileName)
+		if err != nil {
+			return wrapErrFilename(err, outfileName)
+		}
+		outfileDirInfo, err := os.Stat(outfileDir)
+		if err != nil {
+			return wrapErrFilename(ErrBadOutfileDir, outfileName)
+		}
+		// // Check if outfile directory is writable by user
+		if !isWritable(outfileDirInfo) {
+			return wrapErrFilename(ErrOutfileNotWritable, outfileName)
+		}
+
+		// Normal, writable outfile
+		outfileGoodFile = true
+	} else {
+		// Leave outfileGoodFile false
+		outfile = os.Stdout
+	}
+
 	decrypt := cmd.decrypt()
 	encoding := cmd.encoding()
 	compress := cmd.compression()
@@ -116,6 +135,29 @@ func (a *Gfc) RunCLI() error {
 		return errors.Wrap(err, "output processing failed")
 	}
 
+	// Open outfile
+	if outfileGoodFile {
+		outfile, err = os.Create(outfileName)
+		if err != nil {
+			return errors.Wrap(err, "outfile not created")
+		}
+		closeOutfile := func() {
+			if err := outfile.Close(); err != nil {
+				fmt.Fprintf(os.Stderr, "failed to close outfile %s: %s\n", outfileName, err.Error())
+			}
+		}
+		// Catch panics and close outfile only if it's not stdout
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Fprintf(os.Stderr, "panic recovered: %v\n", r)
+				closeOutfile()
+			}
+		}()
+		defer closeOutfile()
+	}
+
+	// Prepare to close non-stdout outfile when done
+	// Write to outfile
 	if _, err := buf.WriteTo(outfile); err != nil {
 		return errors.Wrapf(err, "failed to write to outfile %s", outfile.Name())
 	}

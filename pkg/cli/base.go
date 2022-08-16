@@ -4,7 +4,17 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/artnoi43/gfc/pkg/gfc"
+)
+
+// Hard-coded flag values for baseCryptFlags.EncodingFlag, used in baseCryptFlags.encoding()
+const (
+	b64lagValue     = "B64"
+	base64FlagValue = "BASE64"
+	hexFlagValue    = "HEX"
+	hFlagValue      = "H"
 )
 
 // baseCryptFlags represents the shared gfc CLI flags between subcommands.
@@ -19,27 +29,28 @@ type baseCryptFlags struct {
 	OutfileFlag  string `arg:"-o,--outfile" placeholder:"OUT" help:"Output filename, stdout will be used if omitted"`
 }
 
-func infile(fname string, isText bool) (*os.File, error) {
+// openInfileOrOrStdin returns fd to file 'fname',
+// or it returns os.Stdin if fname is empty
+func openInfileOrOrStdin(fname string, isText bool) (*os.File, error) {
 	if fname == "" {
 		if isText {
-			gfc.Write(os.Stdout, "Text input:\n")
+			os.Stdout.WriteString("Text input:\n")
 		}
 		return os.Stdin, nil
+	}
+	if isText {
+		return nil, errors.Wrapf(ErrBadInfileIsText, "got both infile %s and --text flag", fname)
 	}
 	return os.Open(fname)
 }
 
-func outfile(fname string) (*os.File, error) {
-	if fname == "" {
-		return os.Stdout, nil
-	}
-
-	return os.Create(fname)
-}
-
 // Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) infile() (*os.File, error) {
-	return infile(f.InfileFlag, f.isText())
+func (f *baseCryptFlags) infile() (string, *os.File, error) {
+	fp, err := openInfileOrOrStdin(f.InfileFlag, f.isText())
+	if err != nil {
+		return "$BADINFILE", nil, err
+	}
+	return f.InfileFlag, fp, nil
 }
 
 // Any struct that embeds *baseCryptFlags will inherit this
@@ -48,8 +59,8 @@ func (f *baseCryptFlags) isText() bool {
 }
 
 // Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) outfile() (*os.File, error) {
-	return outfile(f.OutfileFlag)
+func (f *baseCryptFlags) outfile() string {
+	return f.OutfileFlag
 }
 
 func (f *baseCryptFlags) decrypt() bool {
@@ -61,11 +72,11 @@ func (f *baseCryptFlags) compression() bool {
 }
 
 func (f *baseCryptFlags) encoding() gfc.Encoding {
-	encoding := f.EncodingFlag
-	if strings.EqualFold(encoding, "B64") || strings.EqualFold(encoding, "BASE64") {
-		return gfc.Base64
-	} else if strings.EqualFold(encoding, "H") || strings.EqualFold(encoding, "HEX") {
-		return gfc.Hex
+	encoding := strings.ToUpper(f.EncodingFlag)
+	if strings.EqualFold(encoding, b64lagValue) || strings.EqualFold(encoding, base64FlagValue) {
+		return gfc.EncodingBase64
+	} else if strings.EqualFold(encoding, hFlagValue) || strings.EqualFold(encoding, hexFlagValue) {
+		return gfc.EncodingHex
 	}
 	return gfc.NoEncoding
 }

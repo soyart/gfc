@@ -23,6 +23,6 @@ const (
 	ChaCha20_Poly1305
 
 	NoEncoding Encoding = iota
-	Base64
-	Hex
+	EncodingBase64
+	EncodingHex
 )

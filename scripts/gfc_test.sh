@@ -60,8 +60,10 @@ function file_test() {
     enc_outfile=$5;
     dec_outfile=$6;
 
+    test_name="[File Test #${test_num}]";
+
     is_verbose\
-    && printf "[File Test] %s: %s\n" "${test_num}" "${test_desc}"\
+    && printf "%s: %s\n" "${test_name}" "${test_desc}"\
     && echo ""\
     && printf "Encrypt command:\t%s\n" "${enc_cmd}"\
     && printf "Decrypt command:\t%s\n" "${dec_cmd}"\
@@ -69,7 +71,7 @@ function file_test() {
     && printf "Decrypt outfile:\t%s\n" "${dec_outfile}"\
     && echo "";
 
-    simyn "[File Test] Run test ${test_num} ${test_desc}?"\
+    simyn "${test_name} Run test ${test_desc}?"\
     && runtest=1\
     && sh -c "${enc_cmd}"\
     && sh -c "${dec_cmd}"\
@@ -78,10 +80,10 @@ function file_test() {
     || printf "%s\n" "❌ Failed: ${test_desc}";
 
     test $runtest -ne 0\
-    && printf "[File Test] Cleaning up %s %s\n" "${enc_outfile}" "${dec_outfile}"\
+    && printf "%s Cleaning up %s %s\n" "${test_name}" "${enc_outfile}" "${dec_outfile}"\
     && rm ${enc_outfile} ${dec_outfile}\
-    && printf "[File Test] %s\n" "✅ Cleanup successful"\
-    || printf "[File Test] %s\n" "❌ Cleanup failed: ${test_desc}";
+    && printf "%s ✅ Cleanup successful\n" "${test_name}"\
+    || printf "%s ❌ Cleanup failed\n" "${test_name}";
 
     line;
 }
@@ -95,13 +97,15 @@ function pipe_test() {
     test_desc="$2";
     pipe_test_cmd="$3";
 
-    is_verbose\
-    && printf "[Pipe Test] Piped command: %s\n" "${pipe_test_cmd}";
+    test_name="[Pipe Test #${test_num}";
 
-    simyn "[Pipe Test] Run test ${test_num} ${test_desc}?"\
+    is_verbose\
+    && printf "%s Piped command: %s\n" "${test_name}" "${pipe_test_cmd}";
+
+    simyn "${test_name} Run test ${test_num} ${test_desc}?"\
     && sh -c "${pipe_test_cmd}"\
-    && printf "[Pipe Test] %s\n" "✅ OK: ${test_desc}"\
-    || printf "[Pipe Test] %s\n" "❌ Failed: ${test_desc}";
+    && printf "%s ✅ OK\n" "${test_name}"\
+    || printf "%s ❌ Failed\n" "${test_name}";
 
     line;
 }

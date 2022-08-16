@@ -34,7 +34,7 @@ func main() {
 		}
 
 		// Non-user error
-		fmt.Fprintf(os.Stderr, "error: %s+\n", err.Error())
+		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 		os.Exit(2)
 	}
 }

@@ -4,16 +4,12 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 )
 
-// TODO: Verify that this works on Windows too,
-// otherwise we'll need to create Windows-specific
-// like this https://stackoverflow.com/questions/20026320/how-to-tell-if-folder-exists-and-is-writable
+// TODO: UNIX only - Windows not supported
 func isWritable(info os.FileInfo) bool {
-	if info.Mode().Perm()&(1<<(uint(7))) == 0 {
-		return false
-	}
-	return true
+	return unix.Access(info.Name(), unix.W_OK) == nil
 }
 
 func wrapErrFilename(err error, fname string) error {

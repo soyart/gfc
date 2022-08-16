@@ -91,19 +91,30 @@ func (a *Gfc) Run() error {
 	// Validates outfile and returns error before attempting to do anything expensive
 	outfileName := cmd.outfile()
 	if outfileName != "" {
-		outfileDir := path.Dir(outfileName)
-		if err != nil {
-			return wrapErrFilename(err, outfileName)
+		if outfileName != "/dev/null" {
+			outfileDir := path.Dir(outfileName)
+			if err != nil {
+				return wrapErrFilename(err, outfileName)
+			}
+			outfileDirInfo, err := os.Stat(outfileDir)
+			if err != nil {
+				return wrapErrFilename(ErrBadOutfileDir, outfileName)
+			}
+			// Check if outfile directory is writable by user
+			if !isWritable(outfileDirInfo) {
+				// If the directory is unwritable,
+				// but there's a file owned and writable by user there.
+				outfileInfo, err := os.Stat(outfileName)
+				if err != nil {
+					// Error reason example: outfile = /some_dir_user_owns/{does not exist}
+					return wrapErrFilename(ErrOutfileNotWritable, outfileDir)
+				}
+				if !isWritable(outfileInfo) {
+					// Error reason example: outfile = /etc/fstab
+					return wrapErrFilename(ErrOutfileDirNotWritable, outfileName)
+				}
+			}
 		}
-		outfileDirInfo, err := os.Stat(outfileDir)
-		if err != nil {
-			return wrapErrFilename(ErrBadOutfileDir, outfileName)
-		}
-		// // Check if outfile directory is writable by user
-		if !isWritable(outfileDirInfo) {
-			return wrapErrFilename(ErrOutfileNotWritable, outfileName)
-		}
-
 		// Normal, writable outfile
 		outfileGoodFile = true
 	} else {
@@ -137,7 +148,7 @@ func (a *Gfc) Run() error {
 
 	// Open outfile
 	if outfileGoodFile {
-		outfile, err = os.Create(outfileName)
+		outfile, err = os.OpenFile(outfileName, os.O_RDWR|os.O_CREATE, os.FileMode(0600))
 		if err != nil {
 			return errors.Wrap(err, "outfile not created")
 		}

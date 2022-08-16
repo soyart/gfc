@@ -8,6 +8,7 @@ const (
 	ErrFileIsDir
 	ErrBadInfileIsText
 	ErrBadOutfileDir
+	ErrOutfileDirNotWritable
 	ErrOutfileNotWritable
 )
 
@@ -23,6 +24,8 @@ func (err cliError) Error() string {
 		return "cannot read infile and input text simultaneously"
 	case ErrBadOutfileDir:
 		return "bad outfile path"
+	case ErrOutfileDirNotWritable:
+		return "missing write permission in outfile directory"
 	case ErrOutfileNotWritable:
 		return "missing write permission for outfile"
 	}

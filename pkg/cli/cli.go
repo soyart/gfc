@@ -44,15 +44,15 @@ type subcommand interface {
 }
 
 // TODO: Extract outfile validation and write into own functions?
-func (a *Gfc) Run() error {
+func (g *Gfc) Run() error {
 	var cmd subcommand
 	switch {
-	case a.AESCommand != nil:
-		cmd = a.AESCommand
-	case a.RSACommand != nil:
-		cmd = a.RSACommand
-	case a.XChaCha20Command != nil:
-		cmd = a.XChaCha20Command
+	case g.AESCommand != nil:
+		cmd = g.AESCommand
+	case g.RSACommand != nil:
+		cmd = g.RSACommand
+	case g.XChaCha20Command != nil:
+		cmd = g.XChaCha20Command
 	default:
 		return ErrMissingSubcommand
 	}

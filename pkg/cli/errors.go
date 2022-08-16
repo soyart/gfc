@@ -1,17 +1,30 @@
 package cli
 
-import "github.com/pkg/errors"
+type cliError uint8
 
-var (
-	// CLI error (user error)
-
-	ErrMissingSubcommand = errors.New("missing subcommand")
-	ErrInvalidModeAES    = errors.New("invalid AES mode")
-
-	// I/O error, but also from the user part
-
-	ErrFileIsDir          = errors.New("file is directory")
-	ErrBadInfileIsText    = errors.New("cannot read infile and input text simultaneously")
-	ErrBadOutfileDir      = errors.New("bad outfile path")
-	ErrOutfileNotWritable = errors.New("missing write permission for outfile")
+const (
+	ErrMissingSubcommand cliError = iota
+	ErrInvalidModeAES
+	ErrFileIsDir
+	ErrBadInfileIsText
+	ErrBadOutfileDir
+	ErrOutfileNotWritable
 )
+
+func (err cliError) Error() string {
+	switch err {
+	case ErrMissingSubcommand:
+		return "missing subcommand"
+	case ErrInvalidModeAES:
+		return "invalid AES mode"
+	case ErrFileIsDir:
+		return "file is directory"
+	case ErrBadInfileIsText:
+		return "cannot read infile and input text simultaneously"
+	case ErrBadOutfileDir:
+		return "bad outfile path"
+	case ErrOutfileNotWritable:
+		return "missing write permission for outfile"
+	}
+	return "unknown CLI error (should not happen)"
+}

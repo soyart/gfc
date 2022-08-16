@@ -21,12 +21,12 @@ const (
 // If you are adding a new algorithm, you don't have to use baseCryptFlags,
 // just implement Command interface with any means.
 type baseCryptFlags struct {
-	DecryptFlag  bool   `arg:"-d,--decrypt" default:"false" help:"Decrypt mode"`
 	StdinText    bool   `arg:"-t,--text" default:"false" help:"Enter a text line manually to stdin"`
-	CompressFlag bool   `arg:"-c,--compress" default:"false" help:"Use ZSTD compression"`
+	DecryptFlag  bool   `arg:"-d,--decrypt" default:"false" help:"Decrypt mode"`
 	InfileFlag   string `arg:"-i,--infile" placeholder:"IN" help:"Input filename, stdin will be used if omitted"`
-	EncodingFlag string `arg:"-e,--encoding" placeholder:"ENC" help:"'base64' or 'hex' encoding for input or output"`
 	OutfileFlag  string `arg:"-o,--outfile" placeholder:"OUT" help:"Output filename, stdout will be used if omitted"`
+	EncodingFlag string `arg:"-e,--encoding" placeholder:"ENC" help:"'base64' or 'hex' encoding for input or output"`
+	CompressFlag bool   `arg:"-c,--compress" default:"false" help:"Use ZSTD compression"`
 }
 
 // openInfileOrOrStdin returns fd to file 'fname',

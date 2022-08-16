@@ -76,8 +76,8 @@ function file_test() {
     && sh -c "${enc_cmd}"\
     && sh -c "${dec_cmd}"\
     && diff "${INFILE}" "${dec_outfile}"\
-    && printf "%s\n" "✅ OK: ${test_desc}"\
-    || printf "%s\n" "❌ Failed: ${test_desc}";
+    && printf "%s\n" "✅ OK: ${test_name}"\
+    || printf "%s\n" "❌ Failed: ${test_name}";
 
     test $runtest -ne 0\
     && printf "%s Cleaning up %s %s\n" "${test_name}" "${enc_outfile}" "${dec_outfile}"\
@@ -97,7 +97,7 @@ function pipe_test() {
     test_desc="$2";
     pipe_test_cmd="$3";
 
-    test_name="[Pipe Test #${test_num}";
+    test_name="[Pipe Test #${test_num}]";
 
     is_verbose\
     && printf "%s Piped command: %s\n" "${test_name}" "${pipe_test_cmd}";

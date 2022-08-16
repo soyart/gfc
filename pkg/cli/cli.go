@@ -68,7 +68,7 @@ func (g *Gfc) Run() error {
 	isTextInput := cmd.isText()
 
 	// infile is opened early so we know sooner if it's bad.
-	// The file pointer is closed by readInput.
+	// The file pointer is closed by readInfile.
 	infileName, infile, err := cmd.infile()
 	if err != nil {
 		return errors.Wrapf(err, "failed to read infile")
@@ -126,7 +126,7 @@ func (g *Gfc) Run() error {
 	encoding := cmd.encoding()
 	compress := cmd.compression()
 
-	buf, err := readInput(infile, isTextInput)
+	buf, err := readInfile(infile, isTextInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to read input")
 	}
@@ -176,8 +176,8 @@ func (g *Gfc) Run() error {
 	return nil
 }
 
-// readInput does not use os.ReadFile to read infile, so we must close infile manually.
-func readInput(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
+// readInfile does not use os.ReadFile to read infile, so we must close infile manually.
+func readInfile(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 	// Read input from a file or stdin. If from stdin, a "\n" denotes the end of the input.
 	var gfcInput gfc.Buffer = new(bytes.Buffer)
 	if infile == os.Stdin {

@@ -6,8 +6,8 @@ require (
 	github.com/alexflint/go-arg v1.4.3
 	github.com/klauspost/compress v1.15.9
 	github.com/pkg/errors v0.9.1
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
+	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
+	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 )
 

@@ -14,6 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const lenNonceGCM256 int = 12
+
 func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	key, salt, err := keySaltPBKDF2(aesKey, nil)
 	if err != nil {
@@ -29,11 +31,11 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		return nil, errors.Wrap(err, ErrNewGCM.Error())
 	}
 
-	return marshalGfcSymmAEAD(gcm, plaintext, lenNonceGCM, salt)
+	return marshalSymmOut(gcm, plaintext, lenNonceGCM256, salt)
 }
 
 func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	ciphertextBytes, key, nonce, err := unmarshalGfcSymmAEAD(ciphertext, aesKey, lenNonceGCM)
+	ciphertextBytes, key, nonce, err := unmarshalSymmOut(ciphertext, aesKey, lenNonceGCM256)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrUnmarshalSymmAEAD.Error())
 	}

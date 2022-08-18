@@ -8,9 +8,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// marshalGfcSymmAEAD generates random nonce of size nonceSize
+// marshalSymmOut generates random nonce of size nonceSize
 // and marshals the output for all symmetric key encryption by gfc
-func marshalGfcSymmAEAD(
+func marshalSymmOut(
 	c cipher.AEAD,
 	plaintext Buffer,
 	nonceSize int,
@@ -29,8 +29,8 @@ func marshalGfcSymmAEAD(
 	return ciphertext, nil
 }
 
-// unmarshalGfcSymmAEAD unmarshals gfc symmetric key encryption output into ciphertext, key, and nonce
-func unmarshalGfcSymmAEAD(
+// unmarshalSymmOut unmarshals gfc symmetric key encryption output into ciphertext, key, and nonce
+func unmarshalSymmOut(
 	ciphertext Buffer,
 	key []byte,
 	nonceSize int,

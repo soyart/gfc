@@ -71,7 +71,7 @@ function file_test() {
     && printf "Decrypt outfile:\t%s\n" "${dec_outfile}"\
     && echo "";
 
-    simyn "${test_name} Run test ${test_desc}?"\
+    simyn "${test_name} Run file test ${test_desc}?"\
     && runtest=1\
     && sh -c "${enc_cmd}"\
     && sh -c "${dec_cmd}"\
@@ -102,7 +102,7 @@ function pipe_test() {
     is_verbose\
     && printf "%s Piped command: %s\n" "${test_name}" "${pipe_test_cmd}";
 
-    simyn "${test_name} Run test ${test_num} ${test_desc}?"\
+    simyn "${test_name} Run pipe test ${test_num} ${test_desc}?"\
     && sh -c "${pipe_test_cmd}"\
     && printf "%s ✅ OK\n" "${test_name}"\
     || printf "%s ❌ Failed\n" "${test_name}";

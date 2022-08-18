@@ -24,6 +24,7 @@ func marshalSymmOut(
 
 	ciphertext := new(bytes.Buffer)
 	ciphertext.Write(c.Seal(nil, nonce, plaintext.Bytes(), nil))
+
 	// Append AEAD nonce and PBKDF2 salt
 	ciphertext.Write(nonce)
 	ciphertext.Write(salt)

@@ -20,12 +20,12 @@ func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 	mode := strings.ToUpper(cmd.AesMode)
 	switch mode {
 	case "GCM":
-		return gfc.AES_GCM, nil
+		return gfc.ModeAesGCM, nil
 	case "CTR":
-		return gfc.AES_CTR, nil
+		return gfc.ModeAesCTR, nil
 	}
 
-	return gfc.InvalidAlgoMode, errors.Wrapf(ErrInvalidModeAES, "unknown mode %s", cmd.AesMode)
+	return gfc.ModeInvalid, errors.Wrapf(ErrInvalidModeAES, "unknown mode %s", cmd.AesMode)
 }
 
 func (cmd *aesCommand) key() ([]byte, error) {
@@ -45,12 +45,12 @@ func (cmd *aesCommand) crypt(
 	error,
 ) {
 	switch mode {
-	case gfc.AES_GCM:
+	case gfc.ModeAesGCM:
 		if decrypt {
 			return gfc.DecryptGCM(buf, key)
 		}
 		return gfc.EncryptGCM(buf, key)
-	case gfc.AES_CTR:
+	case gfc.ModeAesCTR:
 		if decrypt {
 			return gfc.DecryptCTR(buf, key)
 		}

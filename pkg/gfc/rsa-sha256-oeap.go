@@ -1,7 +1,6 @@
 package gfc
 
-// This file is used to asymmetrically encrypt AES keys
-// so that we can use public key cryptography with long plaintext messages
+// This file provides RSA-OEAP encryption for gfc.
 
 import (
 	"bytes"

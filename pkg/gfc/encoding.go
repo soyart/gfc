@@ -14,7 +14,7 @@ import (
 func Decode(encoding Encoding, raw Buffer) (Buffer, error) {
 	var decoder io.Reader
 	switch encoding {
-	case NoEncoding:
+	case EncodingNone:
 		return raw, nil
 	case EncodingBase64:
 		decoder = base64.NewDecoder(base64.StdEncoding, raw)
@@ -35,7 +35,7 @@ func Encode(encoding Encoding, raw Buffer) (Buffer, error) {
 	encoded := new(bytes.Buffer)
 	var encoder interface{}
 	switch encoding {
-	case NoEncoding:
+	case EncodingNone:
 		return raw, nil
 	case EncodingBase64:
 		encoder = base64.NewEncoder(base64.StdEncoding, encoded)

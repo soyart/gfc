@@ -1,5 +1,7 @@
 package gfc
 
+// This file provides (X)ChaCha20-Poly1305 encryption for gfc.
+
 import (
 	"bytes"
 	"crypto/cipher"
@@ -8,7 +10,6 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
-// EncryptFamilyChaCha20 is wrapped by both EncryptXChaCha20Poly1305/EncryptChaChaPoly1305 for XChaCha20-Poly1305/ChaCha20-Poly1305
 func EncryptFamilyChaCha20(
 	newCipherFunc func([]byte) (cipher.AEAD, error),
 	nonceSize int,
@@ -30,7 +31,6 @@ func EncryptFamilyChaCha20(
 	return marshalSymmOut(block, plaintext, nonceSize, salt)
 }
 
-// DecryptFamilyChaCha20 is wrapped by both DecryptXChaCha20Poly1305 and DecryptChaChaPoly1305 for XChaCha20-Poly1305/ChaCha20-Poly1305
 func DecryptFamilyChaCha20(
 	newCipherFunc func([]byte) (cipher.AEAD, error),
 	nonceSize int,

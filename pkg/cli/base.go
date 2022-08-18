@@ -72,11 +72,13 @@ func (f *baseCryptFlags) compression() bool {
 }
 
 func (f *baseCryptFlags) encoding() gfc.Encoding {
+	// Check with all uppercase enums
 	encoding := strings.ToUpper(f.EncodingFlag)
-	if strings.EqualFold(encoding, b64lagValue) || strings.EqualFold(encoding, base64FlagValue) {
+	if encoding == b64lagValue || encoding == base64FlagValue {
 		return gfc.EncodingBase64
-	} else if strings.EqualFold(encoding, hFlagValue) || strings.EqualFold(encoding, hexFlagValue) {
+	} else if encoding == hFlagValue || encoding == hexFlagValue {
 		return gfc.EncodingHex
 	}
-	return gfc.NoEncoding
+
+	return gfc.EncodingNone
 }

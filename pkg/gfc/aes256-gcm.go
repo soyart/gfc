@@ -1,6 +1,6 @@
 package gfc
 
-// This file provides default encryption mode for gfc.
+// This file provides AES256-GCM encryption for gfc.
 // This mode is chosen because it has message authentication
 // built-in and because it is generally faster.
 // For very large files, you may want to use CTR.

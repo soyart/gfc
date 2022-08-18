@@ -19,7 +19,7 @@ type rsaCommand struct {
 
 // rsaCommand only supports 1 RSA mode for now (OEAP)
 func (cmd *rsaCommand) algoMode() (gfc.AlgoMode, error) {
-	return gfc.RSA_OEAP, nil
+	return gfc.ModeRsaOEAP, nil
 }
 
 // rsaCommand will give key strings priority over key filenames
@@ -53,7 +53,7 @@ func (cmd *rsaCommand) crypt(
 	error,
 ) {
 	switch mode {
-	case gfc.RSA_OEAP:
+	case gfc.ModeRsaOEAP:
 		if decrypt {
 			return gfc.DecryptRSA(buf, key)
 		}

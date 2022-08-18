@@ -186,21 +186,7 @@ The main (stable) branch of gfc is hosted on [Github](https://github.com/artnoi4
 
 ## Depedencies
 
-I try my best to keep dependencies low and aviod using external libraries.
-
-- [`golang.org/x/term`](https://golang.org/x/term)
-
-imported for a proper, secure passphrase prompt
-
-- [`golang.org/x/crypto`](https://golang.org/x/crypto)
-
-imported for cryptographic ciphers, e.g. AES and ChaCha20, and [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2)
-
-- [`github.com/alexflint/go-arg`](https://github.com/alexflint/go-arg)
-
-imported for CLI argument handling
-
-- [`github.com/klauspost/compress`](https://github.com/klauspost/compress)
+I try my best to keep [dependencies](go.mod) low and aviod using external libraries.
 
 imported for ZSTD compression
 

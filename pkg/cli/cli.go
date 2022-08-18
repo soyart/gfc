@@ -44,6 +44,7 @@ type subcommand interface {
 }
 
 // TODO: Extract outfile validation and write into own functions?
+// Run is the application code for gfc.
 func (g *Gfc) Run() error {
 	var cmd subcommand
 	switch {
@@ -57,6 +58,12 @@ func (g *Gfc) Run() error {
 		return ErrMissingSubcommand
 	}
 
+	// It first validates if the user flags are good;
+	// all subcommand interface methods which may return error are all validated early.
+	// It then goes on to probe the filesystem if the desired infile and outfile are good to write to.
+	// This is to avoid performing expensive encryption operation only to waste a lot of time
+	// only to find out later that the outfile is bad.
+
 	mode, err := cmd.algoMode()
 	if err != nil {
 		return errors.Wrap(err, "invalid algorithm mode")
@@ -65,7 +72,6 @@ func (g *Gfc) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to read key")
 	}
-	isTextInput := cmd.isText()
 
 	// infile is opened early so we know sooner if it's bad.
 	// The file pointer is closed by readInfile.
@@ -86,8 +92,8 @@ func (g *Gfc) Run() error {
 	// outfile is opened (created) late in this function, just before the final writes
 	// so that we don't have hanging file pointer opened for too long before it is written.
 	var outfile *os.File
-	// True if outfile is (1) not stdout (2) not dir (3) user writable
-	var outfileGoodFile bool
+	// outfileIsFSFile is true if (1) it's not stdout AND (2) not dir AND (3) must be user writable
+	var outfileIsFSFile bool
 	// Validates outfile and returns error before attempting to do anything expensive
 	outfileName := cmd.outfile()
 	if outfileName != "" {
@@ -116,38 +122,27 @@ func (g *Gfc) Run() error {
 			}
 		}
 		// Normal, writable outfile
-		outfileGoodFile = true
+		outfileIsFSFile = true
 	} else {
-		// Leave outfileGoodFile false
+		// Leave outfileIsFSFile false
 		outfile = os.Stdout
 	}
 
-	decrypt := cmd.decrypt()
-	encoding := cmd.encoding()
-	compress := cmd.compression()
+	// Validation done here, now gfc starts reading and processing data.
 
-	buf, err := readInfile(infile, isTextInput)
+	buf, err := readInfile(infile, cmd.isText())
 	if err != nil {
 		return errors.Wrap(err, "failed to read input")
 	}
-
-	buf, err = preProcess(buf, decrypt, encoding, compress)
+	buf, err = g.core(cmd, mode, buf, key)
 	if err != nil {
-		return errors.Wrap(err, "input preprocessing failed")
+		return errors.Wrap(err, "cli.Gfc: core returned error")
 	}
 
-	buf, err = cmd.crypt(mode, buf, key, decrypt)
-	if err != nil {
-		return errors.Wrap(err, "cryptography error")
-	}
+	// Work is done, writing out to outfile
 
-	buf, err = postProcess(buf, decrypt, encoding, compress)
-	if err != nil {
-		return errors.Wrap(err, "output processing failed")
-	}
-
-	// Open outfile
-	if outfileGoodFile {
+	// Open FS outfile for open, and preparing to close it with defer statements.
+	if outfileIsFSFile {
 		outfile, err = os.OpenFile(outfileName, os.O_RDWR|os.O_CREATE, os.FileMode(0600))
 		if err != nil {
 			return errors.Wrap(err, "outfile not created")
@@ -167,8 +162,6 @@ func (g *Gfc) Run() error {
 		defer closeOutfile()
 	}
 
-	// Prepare to close non-stdout outfile when done
-	// Write to outfile
 	if _, err := buf.WriteTo(outfile); err != nil {
 		return errors.Wrapf(err, "failed to write to outfile %s", outfile.Name())
 	}
@@ -225,24 +218,15 @@ func preProcess(
 	gfc.Buffer,
 	error,
 ) {
-	var err error
 	if decrypt {
 		// Decryption may need to decide encoded input
-		buf, err = gfc.Decode(encoding, buf)
-		if err != nil {
-			return nil, errors.Wrap(err, "decoding failed")
-		}
-	} else {
-		// Encryption may need to compress input
-		buf, err = gfc.Compress(compress, buf)
-		if err != nil {
-			return nil, errors.Wrap(err, "compression failed")
-		}
+		return gfc.Decode(encoding, buf)
 	}
-	return buf, nil
+	// Encryption may need to compress input
+	return gfc.Compress(compress, buf)
 }
 
-// postProcess modifies the output buffer after encryption/decryption stage before gfc writes it out to outfile
+// postProcess modifies the output buffer after encryption/decryption stage, jusr before gfc writes the buffer out to outfile
 func postProcess(
 	buf gfc.Buffer,
 	decrypt bool,
@@ -256,4 +240,37 @@ func postProcess(
 		return gfc.Decompress(compress, buf)
 	}
 	return gfc.Encode(encoding, buf)
+}
+
+// core pre-processes, encrypts/decrypts, and post-processes buf.
+func (g *Gfc) core(
+	cmd subcommand,
+	mode gfc.AlgoMode,
+	buf gfc.Buffer,
+	key []byte,
+) (
+	gfc.Buffer,
+	error,
+) {
+	var err error
+	decrypt := cmd.decrypt()
+	encoding := cmd.encoding()
+	compress := cmd.compression()
+
+	buf, err = preProcess(buf, decrypt, encoding, compress)
+	if err != nil {
+		return nil, errors.Wrap(err, "input preprocessing failed")
+	}
+
+	buf, err = cmd.crypt(mode, buf, key, decrypt)
+	if err != nil {
+		return nil, errors.Wrap(err, "cryptography error")
+	}
+
+	buf, err = postProcess(buf, decrypt, encoding, compress)
+	if err != nil {
+		return nil, errors.Wrap(err, "output processing failed")
+	}
+
+	return buf, nil
 }

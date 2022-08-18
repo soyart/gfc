@@ -54,7 +54,10 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		}
 	}
 
-	ciphertext.Write(append(iv, salt...))
+	// Append IV and salt just like what marshalSymmOut does
+	ciphertext.Write(iv)
+	ciphertext.Write(salt)
+
 	return ciphertext, nil
 }
 

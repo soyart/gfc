@@ -22,7 +22,7 @@ function is_verbose() {
 . "$(command -v lb.sh)" || printf "%s\n" "error: missing lb.sh - get it from https://gitlab.com/artnoi/unix/-/tree/main/sh-tools/bin";
 
 TMPTEST="tmptest";
-TEST_CMD="go run ./cmd/gfc";
+TEST_CMD="go run ./src/cmd/gfc";
 
 # gfc-aes only
 typeset -A AES_MODE_ENUMS;

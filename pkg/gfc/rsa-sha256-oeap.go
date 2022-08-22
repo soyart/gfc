@@ -13,11 +13,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	hash = sha512.New()
-	salt = rand.Reader
-)
-
 func EncryptRSA(plaintext Buffer, pubKey []byte) (Buffer, error) {
 	block, _ := pem.Decode([]byte(pubKey))
 	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -37,7 +32,7 @@ func EncryptRSA(plaintext Buffer, pubKey []byte) (Buffer, error) {
 		plaintextBytes = plaintext.Bytes()
 	}
 
-	ciphertext, err := rsa.EncryptOAEP(hash, salt, pub, plaintextBytes, nil)
+	ciphertext, err := rsa.EncryptOAEP(sha512.New(), rand.Reader, pub, plaintextBytes, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrEncryptRSA.Error())
 	}
@@ -57,7 +52,7 @@ func DecryptRSA(ciphertext Buffer, priKey []byte) (Buffer, error) {
 		ciphertextBytes = ciphertext.Bytes()
 	}
 
-	plaintext, err := rsa.DecryptOAEP(hash, salt, pri, ciphertextBytes, nil)
+	plaintext, err := rsa.DecryptOAEP(sha512.New(), rand.Reader, pri, ciphertextBytes, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrDecryptRSA.Error())
 	}

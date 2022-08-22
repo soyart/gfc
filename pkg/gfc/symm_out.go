@@ -2,42 +2,32 @@ package gfc
 
 import (
 	"bytes"
-	"crypto/cipher"
-	"crypto/rand"
 
 	"github.com/pkg/errors"
 )
 
-// marshalSymmOut generates random nonce of size nonceSize
-// and marshals the output for all symmetric key encryption by gfc
+// marshalSymmOut marshals the output for all symmetric key encryption by gfc
 func marshalSymmOut(
-	c cipher.AEAD,
-	plaintext Buffer,
-	nonceSize int,
+	ciphertext []byte,
+	nonce []byte,
 	salt []byte,
 ) (
 	Buffer,
 	error,
 ) {
-	nonce := make([]byte, nonceSize)
-	rand.Read(nonce)
-
-	ciphertext := new(bytes.Buffer)
-	ciphertext.Write(c.Seal(nil, nonce, plaintext.Bytes(), nil))
-
-	// Append AEAD nonce and PBKDF2 salt
-	ciphertext.Write(nonce)
-	ciphertext.Write(salt)
-
-	return ciphertext, nil
+	buf := bytes.NewBuffer(ciphertext)
+	buf.Write(nonce)
+	buf.Write(salt)
+	return buf, nil
 }
 
-// unmarshalSymmOut unmarshals gfc symmetric key encryption output into ciphertext, key, and nonce
+// unmarshalSymmOut unmarshals gfc symmetric key encryption output into message length, ciphertext, key, and nonce
 func unmarshalSymmOut(
 	ciphertext Buffer,
 	key []byte,
 	nonceSize int,
 ) (
+	int, // lenMsg or nonceStart
 	[]byte, // Ciphertext
 	[]byte, // Key
 	[]byte, // Nonce
@@ -51,12 +41,12 @@ func unmarshalSymmOut(
 
 	key, _, err := keySaltPBKDF2(key, salt)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, ErrPBKDF2KeySalt.Error())
+		return 0, nil, nil, nil, errors.Wrap(err, ErrPBKDF2KeySalt.Error())
 	}
 
 	nonceStart := saltStart - nonceSize
 	nonce := ciphertextBytes[nonceStart:saltStart]
 	ciphertextBytes = ciphertextBytes[:nonceStart]
 
-	return ciphertextBytes, key, nonce, nil
+	return nonceStart, ciphertextBytes, key, nonce, nil
 }

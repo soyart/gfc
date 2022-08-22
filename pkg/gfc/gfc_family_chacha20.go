@@ -5,6 +5,7 @@ package gfc
 import (
 	"bytes"
 	"crypto/cipher"
+	"crypto/rand"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/chacha20poly1305"
@@ -28,7 +29,14 @@ func EncryptFamilyChaCha20(
 		return nil, errors.Wrap(err, ErrNewCipherXChaCha20Poly1305.Error())
 	}
 
-	return marshalSymmOut(block, plaintext, nonceSize, salt)
+	nonce := make([]byte, nonceSize)
+	rand.Read(nonce)
+
+	return marshalSymmOut(
+		block.Seal(nil, nonce, plaintext.Bytes(), nil),
+		nonce,
+		salt,
+	)
 }
 
 func DecryptFamilyChaCha20(
@@ -40,7 +48,7 @@ func DecryptFamilyChaCha20(
 	Buffer,
 	error,
 ) {
-	ciphertextBytes, key, nonce, err := unmarshalSymmOut(ciphertext, key, nonceSize)
+	_, ciphertextBytes, key, nonce, err := unmarshalSymmOut(ciphertext, key, nonceSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal gfc symmAEAD format")
 	}

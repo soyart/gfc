@@ -18,6 +18,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const blockSizeAES256CTR = 16
+
 func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	key, salt, err := keySaltPBKDF2(aesKey, nil)
 	if err != nil {
@@ -30,7 +32,7 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	}
 
 	// blockSize is 16
-	iv := make([]byte, block.BlockSize())
+	iv := make([]byte, blockSizeAES256CTR)
 	rand.Read(iv)
 
 	stream := cipher.NewCTR(block, iv)
@@ -54,36 +56,23 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		}
 	}
 
-	// Append IV and salt just like what marshalSymmOut does
-	ciphertext.Write(iv)
-	ciphertext.Write(salt)
-
-	return ciphertext, nil
+	return marshalSymmOut(
+		ciphertext.Bytes(),
+		iv,
+		salt,
+	)
 }
 
 func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	ciphertextBytes := ciphertext.Bytes()
-	lenGfcCiphertext := ciphertext.Len()
-
-	saltStart := lenGfcCiphertext - lenPBKDF2Salt
-	salt := ciphertextBytes[saltStart:]
-	key, _, err := keySaltPBKDF2(aesKey, salt)
+	lenMsg, _, key, iv, err := unmarshalSymmOut(ciphertext, aesKey, blockSizeAES256CTR)
 	if err != nil {
-		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
-		return nil, errors.Wrap(err, "AES256-CTR decryption")
+		return nil, errors.Wrap(err, ErrUnmarshalSymmAEAD.Error())
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherCTR.Error())
 	}
-
-	// blockSize is 16
-	lenIV := block.BlockSize()
-	ivStart := saltStart - lenIV
-	iv := ciphertextBytes[ivStart:saltStart]
-
-	lenMsg := ivStart
 	stream := cipher.NewCTR(block, iv)
 	buf := make([]byte, 1024)
 	plaintext := new(bytes.Buffer)

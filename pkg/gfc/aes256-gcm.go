@@ -10,11 +10,12 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 
 	"github.com/pkg/errors"
 )
 
-const lenNonceGCM256 int = 12
+const lenNonceAESGCM256 int = 12
 
 func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	key, salt, err := keySaltPBKDF2(aesKey, nil)
@@ -31,11 +32,18 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		return nil, errors.Wrap(err, ErrNewGCM.Error())
 	}
 
-	return marshalSymmOut(gcm, plaintext, lenNonceGCM256, salt)
+	nonce := make([]byte, lenNonceAESGCM256)
+	rand.Read(nonce)
+
+	return marshalSymmOut(
+		gcm.Seal(nil, nonce, plaintext.Bytes(), nil),
+		nonce,
+		salt,
+	)
 }
 
 func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	ciphertextBytes, key, nonce, err := unmarshalSymmOut(ciphertext, aesKey, lenNonceGCM256)
+	_, ciphertextBytes, key, nonce, err := unmarshalSymmOut(ciphertext, aesKey, lenNonceAESGCM256)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrUnmarshalSymmAEAD.Error())
 	}
@@ -53,5 +61,6 @@ func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, ErrOpenGCM.Error())
 	}
+
 	return bytes.NewBuffer(plaintext), nil
 }

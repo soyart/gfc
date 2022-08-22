@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 function copyfile() {
     cp -a gfc scripts/rgfc.sh ~/bin/.;
@@ -6,5 +6,5 @@ function copyfile() {
 
 test  -f gfc \
 && copyfile\
-|| go build -o gfc ./src/cmd/gfc\
+|| go build -o gfc ./cmd/gfc\
 && copyfile;

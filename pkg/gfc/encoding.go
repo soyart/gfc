@@ -1,7 +1,7 @@
 package gfc
 
-// Non-encryption names are defined in this file
-// It contains mostly I/O related structs and functions
+// This file provides encoding functionality for gfc
+// Current supported encodings are none, base-16 (hexadecimal), and base-64.
 
 import (
 	"bytes"

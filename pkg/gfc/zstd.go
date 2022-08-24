@@ -1,5 +1,8 @@
 package gfc
 
+// This file provides compression functionality for gfc.
+// Z-standard is the only supported algorithm.
+
 import (
 	"bytes"
 

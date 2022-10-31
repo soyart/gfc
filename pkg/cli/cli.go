@@ -186,7 +186,9 @@ func readInfile(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 				stdinBuf := make([]byte, 1024)
 				n, err := infile.Read(stdinBuf)
 				if n > 0 {
-					gfcInput.Write(stdinBuf[:n])
+					if n, err := gfcInput.Write(stdinBuf[:n]); err != nil {
+						return nil, errors.Wrapf(err, "failed to read stdin input to buffer after %dB", n)
+					}
 				}
 				if err == io.EOF {
 					break

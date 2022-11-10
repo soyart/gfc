@@ -50,7 +50,9 @@ func main() {
 func die(exitStatus int, msg string) {
 	// Concat strings, bc why not?
 	errStr := errorMsg + msg + "\n"
-	if exitStatus == userError {
+
+	switch exitStatus {
+	case userError:
 		errStr = errStr + userErrorMsg + "\n"
 	}
 

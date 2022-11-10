@@ -5,6 +5,7 @@ gfc is my first programming project, written the first day I learned Go. I inten
 gfc is a minimal encryption CLI tool designed to be versatile and easy to use. This package provides an executable (`cmd/gfc`), and a library (`pkg/gfc`) providing high-level wrapper for AES256-GCM, AES256-CTR, RSA256-OEAP, ChaCha20-Poly1305, XChaCha20-Poly1305.
 
 gfc can encrypt any files which the user has read access to (except for RSA, which can only encrypt a small messages), as well as stdin.
+
 ## Features
 
 - AES256-GCM and AES256-CTR encryption
@@ -75,6 +76,7 @@ Key and salt handling is in `pkg/gfc/pbkdf2.go`.
 ## Usage
 
 ### Defaults
+
 Default infile: stdin
 
 Default outfile: stdout
@@ -123,7 +125,9 @@ There're 2 ways to use stdin input - piping and by entering text manually.
     $ gfc aes --text -o text.bin;
 
 #### Pre-encryption and post-encryption
+
 > For more info on gfc pre-processing and post-processing, see [CLI page](/pkg/cli/)
+
 ##### Encoding
 We can also apply some encoding to our output (encryption) or input (decryption) with `-e <ENCODING>` or `--encoding <ENCODING>`:
 
@@ -131,11 +135,13 @@ We can also apply some encoding to our output (encryption) or input (decryption)
     $ gfc aes -i plain.txt -k mykey --encoding hex | gfc aes -d -k mykey --encoding hex;
 
 ##### Compression
+
 Similar to encoding, we can enable ZSTD compression with flag `-c` or `--compress`. The example below combines ZSTD compression with hex encoding:
 
     $ gfc aes --compress -i plain.txt -k mykey -e hex | gfc aes --compress -d -k mykey -e hex;
 
 #### Encryption key
+
 ##### AES and XChaCha20
 In `gfc-aes` and `gfc-cc20`, we can specify key filename to use with `-k <KEYFILE>` or `--key <KEYFILE>`. The key must be 256-bit, i.e. 32-byte long. If the key argument is omitted, a user-supplied passphrase will be used to derive an encryption key using PDKDF2.
 
@@ -146,6 +152,7 @@ In `gfc-aes` and `gfc-cc20`, we can specify key filename to use with `-k <KEYFIL
     $ gfc cc20 -k ~/.secret/mykey -i plain.txt -o out.bin;
 
 ##### RSA
+
 It's quite tricky to specify RSA key in the command line, since the keypairs are usually long and multi-lined. As a result, we should leverage the power of UNIX shell to read keyfiles for us. The syntax for this is `"$(< FILENAME)"`, where the shell reads the file for us and gives us the content string.
 
 RSA keyfiles can be specified in 2 ways - with environment variable or as a full flag:

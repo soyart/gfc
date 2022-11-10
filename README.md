@@ -25,15 +25,25 @@ The AES part of the code was first copied from [this source](https://levelup.git
 
 > ALERT: gfc stable just merged with commits that changed how final file layout is written, so if you have files encrypted with previous build of `gfc`, decrypt it with older versions, and re-encrypt plaintext with the current version.
 
+## Using gfc as a Go library
 
-## Building gfc
+Package [`github.com/artnoi43/gfc/pkg/gfc`](./pkg/gfc/) provides public functions for encrypting/decrypting and encoding/decoding.
+
+> The data parameter to these cryptography functions is [`gfc.Buffer`](./pkg/gfc/buffer.go), which is quite constrained.
+> In the [main program](./internal/cli/cli.go), `bytes.Buffer` is used as the standard way to pass data bytes around.
+> This may be changed and the functions might just take `[]byte`.
+
+## Using gfc as a program:
+
+### Building gfc
 
 Build `gfc` executable from source with `go build`:
 
     $ go build cmd/gfc  # compile gfc
     $ cp gfc ~/bin/.    # copy gfc to $PATH 
 
-## Generating gfc encryption keys
+### Generating gfc encryption keys
+
 #### Generating symmetric key for AES or ChaCha20 encryption
 
 To generate a new AES key, I usually use `dd(1)` write 32 bytes of random character to a file:
@@ -63,6 +73,7 @@ To decrypt files encrypted with key derived from a passphrase, that same _salt_ 
 Key and salt handling is in `pkg/gfc/pbkdf2.go`.
 
 ## Usage
+
 ### Defaults
 Default infile: stdin
 
@@ -83,6 +94,7 @@ Default compression: None
 Default key source (symmetric key cryptography only): Passphrase
 
 ### Help
+
 gfc has 2 subcommands - `aes` for AES encryption, and `rsa` for RSA encryption. To see help for each subcommand, just run:
 
     $ gfc aes -h; # See help for gfc-aes
@@ -90,7 +102,9 @@ gfc has 2 subcommands - `aes` for AES encryption, and `rsa` for RSA encryption. 
     $ gfc cc20 -h; # See help for gfc-cc20
 
 ### General arguments/flags
+
 #### Input and output
+
 `-i <INFILE>`, `--infile <INFILE>`, `-o <OUTFILE>`, and `--outfile <OUTFILE>` can be used to specify infile/outfile. If nothing is specified, stdin is used by default for input file, and stdout is used for output file.
 
     $ # Encrypt foo.txt with AES256-GCM to out.bin

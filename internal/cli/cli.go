@@ -169,7 +169,7 @@ func (g *Gfc) Run() error {
 	return nil
 }
 
-// readInfile does not use os.ReadFile to read infile, so we must close infile manually.
+// readInfile does not use os.ReadFile to read infile, so caller must close infile manually.
 func readInfile(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 	// Read input from a file or stdin. If from stdin, a "\n" denotes the end of the input.
 	var gfcInput gfc.Buffer = new(bytes.Buffer)

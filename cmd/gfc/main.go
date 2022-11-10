@@ -2,12 +2,22 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/alexflint/go-arg"
 
-	"github.com/artnoi43/gfc/pkg/cli"
+	"github.com/artnoi43/gfc/internal/cli"
+)
+
+const (
+	// Exit statuses for different errors
+	otherError int = 1
+	userError  int = 2
+
+	// These strings will be concatenated with error message
+	// when writing out to stderr after an error occured in main
+	errorMsg     string = "gfc error: "
+	userErrorMsg string = "See gfc --help"
 )
 
 func main() {
@@ -29,12 +39,21 @@ func main() {
 		case errors.Is(err, cli.ErrBadOutfileDir):
 			fallthrough
 		case errors.Is(err, cli.ErrInvalidModeAES):
-			fmt.Fprintf(os.Stderr, "error: %s\nSee gfc --help\n", err.Error())
-			os.Exit(1)
+			die(userError, err.Error())
 		}
 
 		// Non-user error
-		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
-		os.Exit(2)
+		die(otherError, err.Error())
 	}
+}
+
+func die(exitStatus int, msg string) {
+	// Concat strings, bc why not?
+	errStr := errorMsg + msg + "\n"
+	if exitStatus == userError {
+		errStr = errStr + userErrorMsg + "\n"
+	}
+
+	os.Stderr.Write([]byte(errStr))
+	os.Exit(exitStatus)
 }

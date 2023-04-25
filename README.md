@@ -140,7 +140,7 @@ There're 2 ways to use stdin input - piping and by entering text manually.
 
 #### Pre-encryption and post-encryption
 
-> For more info on gfc pre-processing and post-processing, see [CLI page](/pkg/cli/)
+> For more info on gfc pre-processing and post-processing, see [CLI page](/internal/cli/)
 
 ##### Encoding
 We can also apply some encoding to our output (encryption) or input (decryption) with `-e <ENCODING>` or `--encoding <ENCODING>`:

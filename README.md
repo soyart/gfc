@@ -1,10 +1,10 @@
 # gfc (go file crypt)
 
-gfc is my first programming project, written the first day I learned Go. I intend to learn Go from its development, so expect some bad code.
+> gfc is my first programming project, written the first day I learned Go.
 
-gfc is a minimal encryption CLI tool designed to be versatile and easy to use. This package provides an executable (`cmd/gfc`), and a library (`pkg/gfc`) providing high-level wrapper for AES256-GCM, AES256-CTR, RSA256-OEAP, ChaCha20-Poly1305, XChaCha20-Poly1305.
+gfc is a minimal encryption CLI tool designed to be versatile and easy to use. This package provides [an executable](./cmd/gfc.go), and [a library](./pkg/gfc) providing high-level wrapper for AES256-GCM, AES256-CTR, RSA256-OEAP, ChaCha20-Poly1305, XChaCha20-Poly1305 primitives.
 
-gfc can encrypt any files which the user has read access to (except for RSA, which can only encrypt a small messages), as well as stdin.
+gfc can encrypt any files which the user has read access to (except for RSA, which has limited message length), as well as stdin.
 
 ## Features
 
@@ -40,8 +40,10 @@ Package [`github.com/artnoi43/gfc/pkg/gfc`](./pkg/gfc/) provides public function
 
 Build `gfc` executable from source with `go build`:
 
-    $ go build cmd/gfc  # compile gfc
-    $ cp gfc ~/bin/.    # copy gfc to $PATH 
+```bash
+go build cmd/gfc;  # compile gfc
+cp gfc ~/bin/.;    # copy gfc to $PATH, for example $HOME/bin
+```
 
 ### Generating gfc encryption keys
 
@@ -49,7 +51,9 @@ Build `gfc` executable from source with `go build`:
 
 To generate a new AES key, I usually use `dd(1)` write 32 bytes of random character to a file:
 
-    $ dd if=/dev/random of=assets/files/aes.key bs=32 count=1;
+```bash
+dd if=/dev/random of=assets/files/aes.key bs=32 count=1;
+```
 
 I'm too lazy to add deterministic keyfile hasher, so gfc will assume that the key is well randomized and can be used right away without PBKDF2 or SHA256 hash.
 
@@ -59,11 +63,15 @@ I'm too lazy to add deterministic keyfile hasher, so gfc will assume that the ke
 
 First, you create a private key. In this case, it will be 4096-byte long with name `pri.pem`:
 
-    $ openssl genrsa -out pri.pem 4096;
+```bash
+openssl genrsa -out pri.pem 4096;
+```
 
 Then, derive a public key `pub.pem` from your private key `pri.pem`:
 
-    $ openssl rsa -in pri.pem -outform PEM -pubout -out pub.pem;
+```bash
+openssl rsa -in pri.pem -outform PEM -pubout -out pub.pem;
+```
 
 ## PBKDF2 key derivation function
 
@@ -99,9 +107,11 @@ Default key source (symmetric key cryptography only): Passphrase
 
 gfc has 2 subcommands - `aes` for AES encryption, and `rsa` for RSA encryption. To see help for each subcommand, just run:
 
-    $ gfc aes -h; # See help for gfc-aes
-    $ gfc rsa -h; # See help for gfc-rsa
-    $ gfc cc20 -h; # See help for gfc-cc20
+```bash
+gfc aes -h; # See help for gfc-aes
+gfc rsa -h; # See help for gfc-rsa
+gfc cc20 -h; # See help for gfc-cc20
+```
 
 ### General arguments/flags
 
@@ -109,20 +119,24 @@ gfc has 2 subcommands - `aes` for AES encryption, and `rsa` for RSA encryption. 
 
 `-i <INFILE>`, `--infile <INFILE>`, `-o <OUTFILE>`, and `--outfile <OUTFILE>` can be used to specify infile/outfile. If nothing is specified, stdin is used by default for input file, and stdout is used for output file.
 
-    $ # Encrypt foo.txt with AES256-GCM to out.bin
-    $ gfc aes -i foo.txt -o out.bin;
+```bash
+# Encrypt foo.txt with AES256-GCM to out.bin
+gfc aes -i foo.txt -o out.bin;
 
-    $ # Encrypt foo.txt with AES256-GCM to stdout
-    $ gfc aes -i foo.txt;
+# Encrypt foo.txt with AES256-GCM to stdout
+gfc aes -i foo.txt;
+```
 
 There're 2 ways to use stdin input - piping and by entering text manually.
 
-    $ # gfc gets its input from pipe, and encrypts it with AES256-GCM
-    $ curl https://artnoi.com | gfc aes -o artnoi.com.bin;
-    
-    $ # User types text input into stdin. The input ends with "\n".
-    $ # The output is written to ./text.bin
-    $ gfc aes --text -o text.bin;
+```bash
+ # gfc gets its input from pipe, and encrypts it with AES256-GCM
+ curl https://artnoi.com | gfc aes -o artnoi.com.bin;
+
+ # User types text input into stdin. The input ends with "\n".
+ # The output is written to ./text.bin
+ gfc aes --text -o text.bin;
+```
 
 #### Pre-encryption and post-encryption
 
@@ -131,25 +145,30 @@ There're 2 ways to use stdin input - piping and by entering text manually.
 ##### Encoding
 We can also apply some encoding to our output (encryption) or input (decryption) with `-e <ENCODING>` or `--encoding <ENCODING>`:
 
-    $ # The first execution spits hex-encoded output to the other execution, which expects it
-    $ gfc aes -i plain.txt -k mykey --encoding hex | gfc aes -d -k mykey --encoding hex;
+```bash
+# The first execution spits hex-encoded output to the other execution, which expects it
+gfc aes -i plain.txt -k mykey --encoding hex | gfc aes -d -k mykey --encoding hex;
+```
 
 ##### Compression
 
 Similar to encoding, we can enable ZSTD compression with flag `-c` or `--compress`. The example below combines ZSTD compression with hex encoding:
 
-    $ gfc aes --compress -i plain.txt -k mykey -e hex | gfc aes --compress -d -k mykey -e hex;
+```bash
+gfc aes --compress -i plain.txt -k mykey -e hex | gfc aes --compress -d -k mykey -e hex;
+```
 
 #### Encryption key
 
 ##### AES and XChaCha20
 In `gfc-aes` and `gfc-cc20`, we can specify key filename to use with `-k <KEYFILE>` or `--key <KEYFILE>`. The key must be 256-bit, i.e. 32-byte long. If the key argument is omitted, a user-supplied passphrase will be used to derive an encryption key using PDKDF2.
 
-    $ # gfc will read key from ~/.secret/mykey and uses it to encrypt plain.txt to out.bin;
-    $ gfc aes -k ~/.secret/mykey -i plain.txt -o out.bin;
-    $
-    $ # The same as above, but XChaCha20-Poly1305 is used
-    $ gfc cc20 -k ~/.secret/mykey -i plain.txt -o out.bin;
+```bash
+# gfc will read key from ~/.secret/mykey and uses it to encrypt plain.txt to out.bin;
+gfc aes -k ~/.secret/mykey -i plain.txt -o out.bin;
+# The same as above, but XChaCha20-Poly1305 is used
+gfc cc20 -k ~/.secret/mykey -i plain.txt -o out.bin;
+```
 
 ##### RSA
 
@@ -157,22 +176,22 @@ It's quite tricky to specify RSA key in the command line, since the keypairs are
 
 RSA keyfiles can be specified in 2 ways - with environment variable or as a full flag:
 
-    $ # The shell reads the content of file my_pub.pem to variable PUB
-    $ export PUB="$(< my_pub.pem)";
-    $
-    $ # gfc uses the public key from ENV variable 'PUB' and uses it to encrypt plain.txt
-    $ gfc rsa -i plain.txt -o out.bin;
-    $ # The exact same thing as above, but key is given as argument instead
-    $ gfc rsa -i plain.txt -o out.bin --public-key="$(< my_pub.pem)";
+```bash
+# The shell reads the content of file my_pub.pem to variable PUB
+export PUB="$(< my_pub.pem)";
 
+# gfc uses the public key from ENV variable 'PUB' and uses it to encrypt plain.txt
+gfc rsa -i plain.txt -o out.bin;
+# The exact same thing as above, but key is given as argument instead
+gfc rsa -i plain.txt -o out.bin --public-key="$(< my_pub.pem)";
+# The shell reads the content of file my_pri.pem to variable PRI
+export PRI="$(< my_pri.pem)";
 
-    $ # The shell reads the content of file my_pri.pem to variable PRI
-    $ export PRI="$(< my_pri.pem)";
-    $
-    $ # gfc uses the public key from ENV variable 'PRI' and uses it to decrypt out.bin
-    $ gfc rsa -d -i out.bin;
-    $ # The exact same thing as above, but key is given as argument instead
-    $ gfc rsa -d -i out.bin --private-key="$(< my_pri.pem)";
+# gfc uses the public key from ENV variable 'PRI' and uses it to decrypt out.bin
+gfc rsa -d -i out.bin;
+# The exact same thing as above, but key is given as argument instead
+gfc rsa -d -i out.bin --private-key="$(< my_pri.pem)";
+```
 
 ### Command examples
 
@@ -184,16 +203,22 @@ gfc does not recursively encrypt/decrypt files - that would add needless complex
 
 For example, to create Zstd compressed archive of directory _before encryption_ `foo`:
 
-    $ tar --zstd -cf foo.zstd foo;
+```bash
+tar --zstd -cf foo.zstd foo;
+```
 
 And extract it after decryption with:
 
-    $ tar --zstd -xf foo.zstd;
+```bash
+tar --zstd -xf foo.zstd;
+```
 
 Or with xz compression:
 
-    $ tar -cJf foo.txz foo;
-    $ tar -xJf foo.txz;
+```bash
+tar -cJf foo.txz foo;
+tar -xJf foo.txz;
+```
 
 ## Testing gfc
 

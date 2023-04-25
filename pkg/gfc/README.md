@@ -5,7 +5,7 @@ Code in this package provides the core gfc functionality, e.g. I/O (`utils.go`),
 Users can import this package and use the functions defined here easily.
 
 ## Buffer
-The `gfc` package uses its own custom interface `Buffer` (see `buffer.go`) to describe function parameters. I prefer this to both `[]byte` and `bytes.Buffer` because it gives me a sense of flexibility. With this interface, we can still use `*bytes.Buffer` or any other structs that implement interface `Buffer`.
+The `gfc` package uses its own custom interface `Buffer` (see `buffer.go`) to describe function parameters. It is usually a `bytes.Buffer`.
 
 ```go
 // File buffer.go

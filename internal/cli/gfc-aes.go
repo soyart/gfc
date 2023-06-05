@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/artnoi43/gfc/pkg/gfc"
+	"github.com/soyart/gfc/pkg/gfc"
 )
 
 type aesCommand struct {

@@ -18,4 +18,4 @@ The crypto output maybe encoded to hex or base64 (encryption with encoding), or 
 
 How data flows from the input state to the output state can is shown here
 
-![alt text](https://github.com/artnoi43/gfc/blob/develop/assets/excalidraw/handle.png?raw=true)
+![alt text](https://github.com/soyart/gfc/blob/develop/assets/excalidraw/handle.png?raw=true)

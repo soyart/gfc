@@ -28,7 +28,7 @@ The AES part of the code was first copied from [this source](https://levelup.git
 
 ## Using gfc as a Go library
 
-Package [`github.com/artnoi43/gfc/pkg/gfc`](./pkg/gfc/) provides public functions for encrypting/decrypting and encoding/decoding.
+Package [`github.com/soyart/gfc/pkg/gfc`](./pkg/gfc/) provides public functions for encrypting/decrypting and encoding/decoding.
 
 > The data parameter to these cryptography functions is [`gfc.Buffer`](./pkg/gfc/buffer.go), which is quite constrained.
 > In the [main program](./internal/cli/cli.go), `bytes.Buffer` is used as the standard way to pass data bytes around.
@@ -228,7 +228,7 @@ In addition to Go unit tests, Bash scripts `gfc_test.sh` is shipped with gfc and
 
 There are 2 repositories for gfc, one on GitHub.com and one on GitLab.com
 
-The main (stable) branch of gfc is hosted on [Github](https://github.com/artnoi43/gfc).
+The main (stable) branch of gfc is hosted on [Github](https://github.com/soyart/gfc).
 
 ## Depedencies
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 
-	"github.com/artnoi43/gfc/internal/cli"
+	"github.com/soyart/gfc/internal/cli"
 )
 
 const (

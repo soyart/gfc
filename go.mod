@@ -1,4 +1,4 @@
-module github.com/artnoi43/gfc
+module github.com/soyart/gfc
 
 go 1.19
 

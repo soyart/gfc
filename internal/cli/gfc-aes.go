@@ -14,7 +14,7 @@ type aesCommand struct {
 	AesMode string `arg:"-m,--mode" default:"GCM" placeholder:"MODE" help:"AES mode"`
 	Keyfile string `arg:"-k,--key,env:KEY" placeholder:"KEY" help:"256-bit keyfile for AES"`
 
-	baseCryptFlags
+	baseCommand
 }
 
 func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {

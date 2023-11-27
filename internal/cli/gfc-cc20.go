@@ -12,7 +12,7 @@ type chaCha20Command struct {
 	ChaCha20Mode string `arg:"-m, --mode" placeholder:"[cc20 | xcc20]" default:"xcc20" help:"Supply any string containing 'x' for XChaCha20-Poly1305, and any string without 'x' for ChaCha20-Poly1305"`
 	Keyfile      string `arg:"-k,--key,env:KEY" placeholder:"KEY" help:"256-bit Keyfile for AES"`
 
-	baseCryptFlags
+	baseCommand
 }
 
 // Only XChaCha20-Poly1305 is supported for family of ChaCha20 ciphers

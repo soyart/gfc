@@ -1,10 +1,7 @@
 package cli
 
 import (
-	"os"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/soyart/gfc/pkg/gfc"
 )
@@ -17,10 +14,10 @@ const (
 	hFlagValue      = "H"
 )
 
-// baseCryptFlags represents the shared gfc CLI flags between subcommands.
-// If you are adding a new algorithm, you don't have to use baseCryptFlags,
+// baseCommand represents the shared gfc CLI flags between subcommands.
+// If you are adding a new algorithm, you don't have to use baseCommand,
 // just implement Command interface with any means.
-type baseCryptFlags struct {
+type baseCommand struct {
 	StdinText    bool   `arg:"-t,--text" default:"false" help:"Enter a text line manually to stdin"`
 	DecryptFlag  bool   `arg:"-d,--decrypt" default:"false" help:"Decrypt mode"`
 	InfileFlag   string `arg:"-i,--infile" placeholder:"IN" help:"Input filename, stdin will be used if omitted"`
@@ -29,53 +26,33 @@ type baseCryptFlags struct {
 	CompressFlag bool   `arg:"-c,--compress" default:"false" help:"Use ZSTD compression"`
 }
 
-// openInfileOrOrStdin returns fd to file 'fname',
-// or it returns os.Stdin if fname is empty
-func openInfileOrOrStdin(fname string, isText bool) (*os.File, error) {
-	if fname == "" {
-		if isText {
-			os.Stdout.WriteString("Text input:\n")
-		}
-
-		return os.Stdin, nil
-	}
-
-	if isText {
-		return nil, errors.Wrapf(ErrBadInfileIsText, "got both infile %s and --text flag", fname)
-	}
-
-	return os.Open(fname)
+func (f *baseCommand) filenameIn() string {
+	return f.InfileFlag
 }
 
-// Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) infile() (string, *os.File, error) {
-	fp, err := openInfileOrOrStdin(f.InfileFlag, f.isText())
-	if err != nil {
-		return "$BADINFILE", nil, err
-	}
-
-	return f.InfileFlag, fp, nil
+func (f *baseCommand) filenameOut() string {
+	return f.OutfileFlag
 }
 
 // Any struct that embeds *baseCryptFlags will inherit this
-func (f *baseCryptFlags) isText() bool {
+func (f *baseCommand) stdinText() bool {
 	return f.StdinText
 }
 
 // Caller must call *os.File.Close() on their own
-func (f *baseCryptFlags) outfile() string {
+func (f *baseCommand) outfile() string {
 	return f.OutfileFlag
 }
 
-func (f *baseCryptFlags) decrypt() bool {
+func (f *baseCommand) decrypt() bool {
 	return f.DecryptFlag
 }
 
-func (f *baseCryptFlags) compression() bool {
+func (f *baseCommand) compression() bool {
 	return f.CompressFlag
 }
 
-func (f *baseCryptFlags) encoding() gfc.Encoding {
+func (f *baseCommand) encoding() gfc.Encoding {
 	switch strings.ToUpper(f.EncodingFlag) {
 	case b64lagValue, base64FlagValue:
 		return gfc.EncodingBase64

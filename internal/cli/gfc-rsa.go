@@ -14,7 +14,7 @@ type rsaCommand struct {
 	PubkeyFilename string `arg:"-p,--public-key" placeholder:"PUBFILE" help:"Public key filename"`
 	PriKeyFilename string `arg:"-P,--private-key" placeholder:"PRIFILE" help:"Private key filename"`
 
-	baseCryptFlags
+	baseCommand
 }
 
 // rsaCommand only supports 1 RSA mode for now (OEAP)

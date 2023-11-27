@@ -36,11 +36,14 @@ func openInfileOrOrStdin(fname string, isText bool) (*os.File, error) {
 		if isText {
 			os.Stdout.WriteString("Text input:\n")
 		}
+
 		return os.Stdin, nil
 	}
+
 	if isText {
 		return nil, errors.Wrapf(ErrBadInfileIsText, "got both infile %s and --text flag", fname)
 	}
+
 	return os.Open(fname)
 }
 
@@ -50,6 +53,7 @@ func (f *baseCryptFlags) infile() (string, *os.File, error) {
 	if err != nil {
 		return "$BADINFILE", nil, err
 	}
+
 	return f.InfileFlag, fp, nil
 }
 
@@ -73,7 +77,6 @@ func (f *baseCryptFlags) compression() bool {
 
 func (f *baseCryptFlags) encoding() gfc.Encoding {
 	switch strings.ToUpper(f.EncodingFlag) {
-
 	case b64lagValue, base64FlagValue:
 		return gfc.EncodingBase64
 

@@ -1,10 +1,9 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/soyart/gfc/pkg/gfc"
 )
@@ -21,13 +20,15 @@ func (cmd *chaCha20Command) algoMode() (gfc.AlgoMode, error) {
 	if strings.Contains(cmd.ChaCha20Mode, "x") || strings.Contains(cmd.ChaCha20Mode, "X") {
 		return gfc.ModeXChaCha20Poly1305, nil
 	}
+
 	return gfc.ModeChaCha20Poly1305, nil
 }
 
 func (cmd *chaCha20Command) key() ([]byte, error) {
-	if cmd.Keyfile == "" {
+	if len(cmd.Keyfile) == 0 {
 		return nil, nil
 	}
+
 	return os.ReadFile(cmd.Keyfile)
 }
 
@@ -45,12 +46,16 @@ func (cmd *chaCha20Command) crypt(
 		if decrypt {
 			return gfc.DecryptXChaCha20Poly1305(buf, key)
 		}
+
 		return gfc.EncryptXChaCha20Poly1305(buf, key)
+
 	case gfc.ModeChaCha20Poly1305:
 		if decrypt {
 			return gfc.DecryptChaCha20Poly1305(buf, key)
 		}
+
 		return gfc.EncryptChaCha20Poly1305(buf, key)
 	}
-	return nil, errors.New("invalid ChaCha20 mode (should not happen)")
+
+	return nil, fmt.Errorf("invalid ChaCha20 mode %d (should not happen)", mode)
 }

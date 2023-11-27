@@ -6,6 +6,7 @@ package gfc
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
@@ -21,21 +22,40 @@ const (
 
 func getPass() []byte {
 	os.Stdout.Write([]byte("Passphrase (will not echo)\n"))
-	passphrase, _ := term.ReadPassword(0)
+	passphrase, err := term.ReadPassword(0)
+	if err != nil {
+		panic("failed to read password from stdin: " + err.Error())
+	}
+
 	return passphrase
 }
 
 func generateSaltPBKDF2(salt []byte) []byte {
-	if salt == nil {
-		salt = make([]byte, lenPBKDF2Salt)
-		rand.Read(salt)
+	if salt != nil {
+		if lenSalt := len(salt); lenSalt != lenPBKDF2Salt {
+			panic(fmt.Sprintf("bad salt len - expecting %d, got %d", lenPBKDF2Salt, lenSalt))
+		}
+
+		return salt
 	}
+
+	salt = make([]byte, lenPBKDF2Salt)
+	n, err := rand.Read(salt)
+	if err != nil {
+		panic("failed to read random salt: " + err.Error())
+	}
+
+	if n != lenPBKDF2Salt {
+		panic(fmt.Sprintf("unexpected random salt len - expecting %d, got %d", lenPBKDF2Salt, n))
+	}
+
 	return salt
 }
 
 /* Derive 256-bit key and salt using PBKDF2 */
 func generateKeySaltPBKDF2(passphrase, salt []byte) ([]byte, []byte) {
 	salt = generateSaltPBKDF2(salt)
+
 	return pbkdf2.Key(passphrase, salt, pbkdf2Rounds, lenPBKDF2Salt, sha256.New), salt
 }
 
@@ -51,7 +71,9 @@ func keySaltPBKDF2(symmetricKey, salt []byte) ([]byte, []byte, error) {
 		salt = generateSaltPBKDF2(salt)
 		return symmetricKey, salt, nil
 	}
+
 	// Passphrase
 	symmetricKey, salt = generateKeySaltPBKDF2(getPass(), salt)
+
 	return symmetricKey, salt, nil
 }

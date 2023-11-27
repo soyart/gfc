@@ -23,10 +23,12 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
 		return nil, errors.Wrap(err, "AES256-GCM encryption")
 	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherGCM.Error())
 	}
+
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewGCM.Error())
@@ -35,7 +37,7 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	nonce := make([]byte, lenNonceAESGCM256)
 	rand.Read(nonce)
 
-	return marshalSymmOut(
+	return formatOutputGfcSymm(
 		gcm.Seal(nil, nonce, plaintext.Bytes(), nil),
 		nonce,
 		salt,
@@ -43,7 +45,7 @@ func EncryptGCM(plaintext Buffer, aesKey []byte) (Buffer, error) {
 }
 
 func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	_, ciphertextBytes, key, nonce, err := unmarshalSymmOut(ciphertext, aesKey, lenNonceAESGCM256)
+	_, ciphertextBytes, key, nonce, err := decodeOutputGfcSymm(ciphertext, aesKey, lenNonceAESGCM256)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrUnmarshalSymmAEAD.Error())
 	}
@@ -52,10 +54,12 @@ func DecryptGCM(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherGCM.Error())
 	}
+
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewGCM.Error())
 	}
+
 	/* To decrypt, we use Open(dst, nonce, ciphertext, ciphertext []byte) ([]byte, error) */
 	plaintext, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
 	if err != nil {

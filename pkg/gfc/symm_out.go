@@ -2,12 +2,13 @@ package gfc
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
 
-// marshalSymmOut marshals the output for all symmetric key encryption by gfc
-func marshalSymmOut(
+// formatOutputGfcSymm serializes the output for all symmetric key encryption by gfc
+func formatOutputGfcSymm(
 	ciphertext []byte,
 	nonce []byte,
 	salt []byte,
@@ -15,14 +16,33 @@ func marshalSymmOut(
 	Buffer,
 	error,
 ) {
+	lenNonce := len(nonce)
+	lenSalt := len(salt)
+
 	buf := bytes.NewBuffer(ciphertext)
-	buf.Write(nonce)
-	buf.Write(salt)
+	n, err := buf.Write(nonce)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to append nonce to symmetric encryption output")
+	}
+
+	if n != lenNonce {
+		return nil, fmt.Errorf("unexpected nonce bytes written - expecting %d, got %d", lenNonce, n)
+	}
+
+	n, err = buf.Write(salt)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to append salt to symmetric encryption output")
+	}
+
+	if n != lenSalt {
+		return nil, fmt.Errorf("unexpected salt bytes written - expecting %d, got %d", lenSalt, n)
+	}
+
 	return buf, nil
 }
 
-// unmarshalSymmOut unmarshals gfc symmetric key encryption output into message length, ciphertext, key, and nonce
-func unmarshalSymmOut(
+// decodeOutputGfcSymm unmarshals gfc symmetric key encryption output into message length, ciphertext, key, and nonce
+func decodeOutputGfcSymm(
 	ciphertext Buffer,
 	key []byte,
 	nonceSize int,

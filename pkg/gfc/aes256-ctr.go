@@ -24,8 +24,10 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 	key, salt, err := keySaltPBKDF2(aesKey, nil)
 	if err != nil {
 		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
+
 		return nil, errors.Wrap(err, "AES256-CTR encryption")
 	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherCTR.Error())
@@ -48,15 +50,17 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 			// Write buf[:n] to ciphertext
 			ciphertext.Write(buf[:n])
 		}
+
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return nil, errors.Wrap(err, ErrReadCTR.Error())
 		}
 	}
 
-	return marshalSymmOut(
+	return formatOutputGfcSymm(
 		ciphertext.Bytes(),
 		iv,
 		salt,
@@ -64,7 +68,7 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 }
 
 func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	lenMsg, _, key, iv, err := unmarshalSymmOut(ciphertext, aesKey, blockSizeAES256CTR)
+	lenMsg, _, key, iv, err := decodeOutputGfcSymm(ciphertext, aesKey, blockSizeAES256CTR)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrUnmarshalSymmAEAD.Error())
 	}
@@ -73,22 +77,27 @@ func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherCTR.Error())
 	}
+
 	stream := cipher.NewCTR(block, iv)
 	buf := make([]byte, 1024)
 	plaintext := new(bytes.Buffer)
+
 	for {
 		n, err := ciphertext.Read(buf)
 		if n > 0 {
 			if n > lenMsg {
 				n = lenMsg
 			}
+
 			lenMsg -= n
 			stream.XORKeyStream(buf, buf[:n])
 			plaintext.Write(buf[:n])
 		}
+
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return nil, errors.Wrap(err, ErrReadCTR.Error())
 		}

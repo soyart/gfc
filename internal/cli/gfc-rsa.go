@@ -29,17 +29,22 @@ func (cmd *rsaCommand) key() ([]byte, error) {
 			if cmd.PriKeyFilename != "" {
 				return os.ReadFile(cmd.PriKeyFilename)
 			}
+
 			return nil, errors.New("missing private key for RSA decryption")
 		}
+
 		return []byte(cmd.PriKey), nil
 	}
+
 	// RSA Encryption
 	if cmd.PubKey == "" {
 		if cmd.PubkeyFilename != "" {
 			return os.ReadFile(cmd.PubkeyFilename)
 		}
+
 		return nil, errors.New("missing public key for RSA encryption")
 	}
+
 	return []byte(cmd.PubKey), nil
 }
 
@@ -57,7 +62,9 @@ func (cmd *rsaCommand) crypt(
 		if decrypt {
 			return gfc.DecryptRSA(buf, key)
 		}
+
 		return gfc.EncryptRSA(buf, key)
 	}
+
 	return nil, errors.New("invalid RSA mode (should not happen)")
 }

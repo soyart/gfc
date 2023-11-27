@@ -24,6 +24,7 @@ func EncryptFamilyChaCha20(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get key and salt with PBKDF2")
 	}
+
 	block, err := newCipherFunc(key)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherXChaCha20Poly1305.Error())
@@ -32,7 +33,7 @@ func EncryptFamilyChaCha20(
 	nonce := make([]byte, nonceSize)
 	rand.Read(nonce)
 
-	return marshalSymmOut(
+	return formatOutputGfcSymm(
 		block.Seal(nil, nonce, plaintext.Bytes(), nil),
 		nonce,
 		salt,
@@ -48,14 +49,16 @@ func DecryptFamilyChaCha20(
 	Buffer,
 	error,
 ) {
-	_, ciphertextBytes, key, nonce, err := unmarshalSymmOut(ciphertext, key, nonceSize)
+	_, ciphertextBytes, key, nonce, err := decodeOutputGfcSymm(ciphertext, key, nonceSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal gfc symmAEAD format")
 	}
+
 	block, err := newCipherFunc(key)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrNewCipherXChaCha20Poly1305.Error())
 	}
+
 	plaintext, err := block.Open(nil, nonce, ciphertextBytes, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrOpenXChaCha20Poly1305.Error())

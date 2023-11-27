@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -21,6 +22,7 @@ func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 	switch mode {
 	case "GCM":
 		return gfc.ModeAesGCM, nil
+
 	case "CTR":
 		return gfc.ModeAesCTR, nil
 	}
@@ -29,9 +31,10 @@ func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 }
 
 func (cmd *aesCommand) key() ([]byte, error) {
-	if cmd.Keyfile == "" {
+	if len(cmd.Keyfile) == 0 {
 		return nil, nil
 	}
+
 	return os.ReadFile(cmd.Keyfile)
 }
 
@@ -49,12 +52,16 @@ func (cmd *aesCommand) crypt(
 		if decrypt {
 			return gfc.DecryptGCM(buf, key)
 		}
+
 		return gfc.EncryptGCM(buf, key)
+
 	case gfc.ModeAesCTR:
 		if decrypt {
 			return gfc.DecryptCTR(buf, key)
 		}
+
 		return gfc.EncryptCTR(buf, key)
 	}
-	return nil, errors.New("invalid AES mode (should not happen)")
+
+	return nil, fmt.Errorf("invalid AES mode %d", mode)
 }

@@ -39,33 +39,47 @@ func (err gfcError) Error() string {
 	switch err {
 	case ErrPBKDF2KeySalt:
 		return "PBDKF2 error: key and salt"
+
 	case ErrUnmarshalSymmAEAD:
 		return "error: failed to unmarshal gfc symmetric key cryptography output"
+
 	case ErrInvalidaes256BitKeyFileLen:
 		return "PBKDF2 error: invalid keyfile length"
+
 	case ErrNewCipherCTR:
 		return "AES-CTR error: new CTR"
+
 	case ErrReadCTR:
 		return "AES-CTR error: read Buffer"
+
 	case ErrNewCipherGCM:
 		return "AES-GCM error: new cipher"
+
 	case ErrNewGCM:
 		return "AES-GCM error: new GCM"
+
 	case ErrOpenGCM:
 		return "AES-GCM error: open"
+
 	case ErrParsePubRSA:
 		return "RSA error: parse public key"
+
 	case ErrEncryptRSA:
 		return "RSA error: encrypt"
+
 	case ErrParsePriRSA:
 		return "RSA error: parse Private Key"
+
 	case ErrDecryptRSA:
 		return "RSA error: decrypt"
+
 	case ErrNewCipherXChaCha20Poly1305:
 		return "XChaCha20-Poly1305/ChaCha20-Poly1305 error: new cipher"
+
 	case ErrOpenXChaCha20Poly1305:
 		return "XChaCha20-Poly1305/ChaCha20-Poly1305 error: decrypt"
-	default:
-		return "bad error - should not happen"
+
 	}
+
+	return "bad error - should not happen"
 }

@@ -19,6 +19,7 @@ func TestCryptography(t *testing.T) {
 		testSymmetricCryptograhy(t, "AES256-GCM", EncryptGCM, DecryptGCM, plaintext, key)
 		testSymmetricCryptograhy(t, "AES256-CTR", EncryptCTR, DecryptCTR, plaintext, key)
 	})
+
 	t.Run("testRSA", func(t *testing.T) {
 		pubFile := "./assets/files/pub.pem"
 		priFile := "./assets/files/pri.pem"
@@ -36,6 +37,7 @@ func TestCryptography(t *testing.T) {
 
 		testAsymmetricCryptograhy(t, "RSA256-OEAP", EncryptRSA, DecryptRSA, plaintext, priPEM, pubPEM)
 	})
+
 	t.Run("testXChaCha20Poly1305", func(t *testing.T) {
 		key := make([]byte, aes256BitKeyFileLen)
 		_, err := rand.Read(key)
@@ -59,6 +61,7 @@ func testSymmetricCryptograhy(
 	if err != nil {
 		t.Fatalf("error encrypting with %s: %s", name, err.Error())
 	}
+
 	plaintextBuf, err := decryptFunc(ciphertextBuf, key)
 	if err != nil {
 		t.Fatalf("error decrypting with %s: %s", name, err.Error())
@@ -82,6 +85,7 @@ func testAsymmetricCryptograhy(
 	if err != nil {
 		t.Fatalf("error encrypting with %s: %s", name, err.Error())
 	}
+
 	plaintextBuf, err := decryptFunc(ciphertextBuf, priKey)
 	if err != nil {
 		t.Fatalf("error decrypting with %s: %s", name, err.Error())

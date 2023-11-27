@@ -50,10 +50,13 @@ func (g *Gfc) Run() error {
 	switch {
 	case g.AESCommand != nil:
 		cmd = g.AESCommand
+
 	case g.RSACommand != nil:
 		cmd = g.RSACommand
+
 	case g.XChaCha20Command != nil:
 		cmd = g.XChaCha20Command
+
 	default:
 		return ErrMissingSubcommand
 	}
@@ -68,6 +71,7 @@ func (g *Gfc) Run() error {
 	if err != nil {
 		return errors.Wrap(err, "invalid algorithm mode")
 	}
+
 	key, err := cmd.key()
 	if err != nil {
 		return errors.Wrapf(err, "failed to read key")
@@ -79,11 +83,13 @@ func (g *Gfc) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to read infile")
 	}
+
 	if infile != os.Stdin {
 		infileInfo, err := os.Stat(infileName)
 		if err != nil {
 			return errors.Wrap(err, "failed to read infile metadata")
 		}
+
 		if infileInfo.IsDir() {
 			return wrapErrFilename(ErrFileIsDir, infileName)
 		}
@@ -102,10 +108,12 @@ func (g *Gfc) Run() error {
 			if err != nil {
 				return wrapErrFilename(err, outfileName)
 			}
+
 			outfileDirInfo, err := os.Stat(outfileDir)
 			if err != nil {
 				return wrapErrFilename(ErrBadOutfileDir, outfileName)
 			}
+
 			// Check if outfile directory is writable by user
 			if !isWritable(outfileDirInfo) {
 				// If the directory is unwritable,
@@ -115,6 +123,7 @@ func (g *Gfc) Run() error {
 					// Error reason example: outfile = /some_dir_user_owns/{does not exist}
 					return wrapErrFilename(ErrOutfileNotWritable, outfileDir)
 				}
+
 				if !isWritable(outfileInfo) {
 					// Error reason example: outfile = /etc/fstab
 					return wrapErrFilename(ErrOutfileDirNotWritable, outfileName)
@@ -123,6 +132,7 @@ func (g *Gfc) Run() error {
 		}
 		// Normal, writable outfile
 		outfileIsFSFile = true
+
 	} else {
 		// Leave outfileIsFSFile false
 		outfile = os.Stdout
@@ -134,6 +144,7 @@ func (g *Gfc) Run() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to read input")
 	}
+
 	buf, err = g.core(cmd, mode, buf, key)
 	if err != nil {
 		return errors.Wrap(err, "cli.Gfc: core returned error")
@@ -143,15 +154,17 @@ func (g *Gfc) Run() error {
 
 	// Open FS outfile for open, and preparing to close it with defer statements.
 	if outfileIsFSFile {
-		outfile, err = os.OpenFile(outfileName, os.O_RDWR|os.O_CREATE, os.FileMode(0600))
+		outfile, err = os.OpenFile(outfileName, os.O_RDWR|os.O_CREATE, os.FileMode(0o600))
 		if err != nil {
 			return errors.Wrap(err, "outfile not created")
 		}
+
 		closeOutfile := func() {
 			if err := outfile.Close(); err != nil {
 				fmt.Fprintf(os.Stderr, "failed to close outfile %s: %s\n", outfileName, err.Error())
 			}
 		}
+
 		// Catch panics and close outfile only if it's not stdout
 		defer func() {
 			if r := recover(); r != nil {
@@ -159,6 +172,7 @@ func (g *Gfc) Run() error {
 				closeOutfile()
 			}
 		}()
+
 		defer closeOutfile()
 	}
 
@@ -179,6 +193,7 @@ func readInfile(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 			scanner := bufio.NewScanner(infile)
 			scanner.Scan()
 			gfcInput = bytes.NewBuffer(scanner.Bytes())
+
 		} else {
 			// TODO: maybe use io.ReadAll?
 			// Read whole stdin input
@@ -190,9 +205,11 @@ func readInfile(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 						return nil, errors.Wrapf(err, "failed to read stdin input to buffer after %dB", n)
 					}
 				}
+
 				if err == io.EOF {
 					break
 				}
+
 				if err != nil {
 					return nil, errors.Wrap(err, "failed to read input from stdin")
 				}
@@ -202,6 +219,7 @@ func readInfile(infile *os.File, isTextInput bool) (gfc.Buffer, error) {
 		if _, err := gfcInput.ReadFrom(infile); err != nil {
 			return nil, errors.Wrapf(err, "failed to read from infile: %s", infile.Name())
 		}
+
 		if err := infile.Close(); err != nil {
 			return nil, errors.Wrapf(err, "failed to close infile %s", infile.Name())
 		}
@@ -221,10 +239,9 @@ func preProcess(
 	error,
 ) {
 	if decrypt {
-		// Decryption may need to decide encoded input
 		return gfc.Decode(encoding, buf)
 	}
-	// Encryption may need to compress input
+
 	return gfc.Compress(compress, buf)
 }
 
@@ -241,6 +258,7 @@ func postProcess(
 	if decrypt {
 		return gfc.Decompress(compress, buf)
 	}
+
 	return gfc.Encode(encoding, buf)
 }
 

@@ -13,10 +13,12 @@ func TestZstdCompDecomp(t *testing.T) {
 	if err != nil {
 		t.Errorf("error compressing: %s", err.Error())
 	}
+
 	decompressed, err := decompressZstd(compressed)
 	if err != nil {
 		t.Errorf("error decompressing: %s", err.Error())
 	}
+
 	if !bytes.Equal(b, decompressed.(*bytes.Buffer).Bytes()) {
 		t.Fatalf("unexpected output")
 	}

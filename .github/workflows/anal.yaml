@@ -15,7 +15,7 @@ jobs:
         os:
           - "ubuntu-latest"
           - "macos-latest"
-          - "windows-latest"
+          # - "windows-latest" Not UNIX
 
         go-version: [""] # empty string means use go-version-file (go.mod)
 

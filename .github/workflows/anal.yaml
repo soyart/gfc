@@ -53,9 +53,6 @@ jobs:
       - name: Install dependencies
         run: go get ./...
 
-      - name: Init `gitignore`d test files
-        run: ./scripts/prepare_files.sh
-
       # Q: Why Reviewdog ?
       # A: Because golangci-lint action has some issues, not working on self-hosted runners,
       # and it can't report errors detail on review comments.

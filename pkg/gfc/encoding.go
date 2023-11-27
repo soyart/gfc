@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -25,7 +26,7 @@ func Decode(encoding Encoding, raw Buffer) (Buffer, error) {
 		decoder = hex.NewDecoder(raw)
 
 	default:
-		return nil, errors.New("unknown encoding")
+		return nil, fmt.Errorf("unknown encoding %d", encoding)
 	}
 
 	decoded := new(bytes.Buffer)
@@ -46,9 +47,15 @@ func Encode(encoding Encoding, raw Buffer) (Buffer, error) {
 
 	case EncodingBase64:
 		encoder = base64.NewEncoder(base64.StdEncoding, encoded)
+
 		// Base64 encodings operate in 4-byte blocks; when finished writing,
 		// the caller must Close the returned encoder to flush any partially written blocks.
-		defer encoder.(io.WriteCloser).Close()
+		defer func() {
+			err := encoder.(io.WriteCloser).Close()
+			if err != nil {
+				panic("failed to close base64 encoder: " + err.Error())
+			}
+		}()
 
 	case EncodingHex:
 		encoder = hex.NewEncoder(encoded)

@@ -63,6 +63,11 @@ func (g *Gfc) Run() error {
 		return err
 	}
 
+	outfile, err := openOutput(cmd.filenameOut())
+	if err != nil {
+		return err
+	}
+
 	buf, err := readInput(infile, cmd.stdinText())
 	if err != nil {
 		return errors.Wrap(err, "failed to read input")
@@ -71,11 +76,6 @@ func (g *Gfc) Run() error {
 	buf, err = g.core(cmd, mode, buf, key)
 	if err != nil {
 		return errors.Wrap(err, "cli.Gfc: core returned error")
-	}
-
-	outfile, err := openOutput(cmd.filenameOut())
-	if err != nil {
-		return err
 	}
 
 	if _, err := buf.WriteTo(outfile); err != nil {

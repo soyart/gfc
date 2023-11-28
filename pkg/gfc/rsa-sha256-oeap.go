@@ -15,13 +15,17 @@ import (
 
 func EncryptRSA(plaintext Buffer, pubKey []byte) (Buffer, error) {
 	block, _ := pem.Decode([]byte(pubKey))
-	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+
 	var pub *rsa.PublicKey
+	// PKIX is PKCS1 with certificates/identity metadata
+	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
+		// PKCS1 does not have certificates
 		pub, err = x509.ParsePKCS1PublicKey(block.Bytes)
 		if err != nil {
 			return nil, errors.Wrap(err, ErrParsePubRSA.Error())
 		}
+
 	} else {
 		pub = pubInterface.(*rsa.PublicKey)
 	}
@@ -36,11 +40,13 @@ func EncryptRSA(plaintext Buffer, pubKey []byte) (Buffer, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, ErrEncryptRSA.Error())
 	}
+
 	return bytes.NewBuffer(ciphertext), nil
 }
 
 func DecryptRSA(ciphertext Buffer, priKey []byte) (Buffer, error) {
 	block, _ := pem.Decode([]byte(priKey))
+
 	pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrParsePriRSA.Error())
@@ -56,5 +62,6 @@ func DecryptRSA(ciphertext Buffer, priKey []byte) (Buffer, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, ErrDecryptRSA.Error())
 	}
+
 	return bytes.NewBuffer(plaintext), nil
 }

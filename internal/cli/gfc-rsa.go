@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
@@ -24,28 +25,26 @@ func (cmd *rsaCommand) algoMode() (gfc.AlgoMode, error) {
 
 // rsaCommand will give key strings priority over key filenames
 func (cmd *rsaCommand) key() ([]byte, error) {
+	var key, keyFilename string
+
 	if cmd.DecryptFlag {
-		if cmd.PriKey == "" {
-			if cmd.PriKeyFilename != "" {
-				return os.ReadFile(cmd.PriKeyFilename)
-			}
+		key = cmd.PriKey
+		keyFilename = cmd.PriKeyFilename
 
-			return nil, errors.New("missing private key for RSA decryption")
-		}
-
-		return []byte(cmd.PriKey), nil
+	} else {
+		key = cmd.PubKey
+		keyFilename = cmd.PubkeyFilename
 	}
 
-	// RSA Encryption
-	if cmd.PubKey == "" {
-		if cmd.PubkeyFilename != "" {
-			return os.ReadFile(cmd.PubkeyFilename)
-		}
-
-		return nil, errors.New("missing public key for RSA encryption")
+	if len(key) > 0 {
+		return []byte(key), nil
 	}
 
-	return []byte(cmd.PubKey), nil
+	if len(keyFilename) > 0 {
+		return os.ReadFile(keyFilename)
+	}
+
+	return nil, errors.New("empty rsa key and key filename")
 }
 
 func (cmd *rsaCommand) crypt(
@@ -57,14 +56,13 @@ func (cmd *rsaCommand) crypt(
 	gfc.Buffer,
 	error,
 ) {
-	switch mode {
-	case gfc.ModeRsaOEAP:
-		if decrypt {
-			return gfc.DecryptRSA(buf, key)
-		}
-
-		return gfc.EncryptRSA(buf, key)
+	if mode != gfc.ModeRsaOEAP {
+		panic(fmt.Sprintf("invalid RSA mode %d", mode))
 	}
 
-	return nil, errors.New("invalid RSA mode (should not happen)")
+	if decrypt {
+		return gfc.DecryptRSA(buf, key)
+	}
+
+	return gfc.EncryptRSA(buf, key)
 }

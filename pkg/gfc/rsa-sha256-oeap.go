@@ -17,6 +17,7 @@ func EncryptRSA(plaintext Buffer, pubKey []byte) (Buffer, error) {
 	block, _ := pem.Decode([]byte(pubKey))
 
 	var pub *rsa.PublicKey
+
 	// PKIX is PKCS1 with certificates/identity metadata
 	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {

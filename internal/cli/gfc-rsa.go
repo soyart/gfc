@@ -8,7 +8,7 @@ import (
 	"github.com/soyart/gfc/pkg/gfc"
 )
 
-type rsaCommand struct {
+type cmdRSA struct {
 	PubKey         string `arg:"env:PUB" placeholder:"PUB" help:"Public key string - e.g.: 'PUB=$(< id_rsa.pub) gfc rsa ...'"`
 	PriKey         string `arg:"env:PRI" placeholder:"PRI" help:"Private key string - e.g.: 'PRI=$(< id_rsa) gfc rsa -d ...'"`
 	PubkeyFilename string `arg:"-p,--public-key" placeholder:"PUBFILE" help:"Public key filename"`
@@ -18,37 +18,37 @@ type rsaCommand struct {
 }
 
 // rsaCommand only supports 1 RSA mode for now (OEAP)
-func (cmd *rsaCommand) algoMode() (gfc.AlgoMode, error) {
+func (c *cmdRSA) algoMode() (gfc.AlgoMode, error) {
 	return gfc.ModeRsaOEAP, nil
 }
 
 // rsaCommand will give key strings priority over key filenames
-func (cmd *rsaCommand) key() ([]byte, error) {
-	if cmd.DecryptFlag {
-		if cmd.PriKey == "" {
-			if cmd.PriKeyFilename != "" {
-				return os.ReadFile(cmd.PriKeyFilename)
+func (c *cmdRSA) key() ([]byte, error) {
+	if c.DecryptFlag {
+		if c.PriKey == "" {
+			if c.PriKeyFilename != "" {
+				return os.ReadFile(c.PriKeyFilename)
 			}
 
 			return nil, errors.New("missing private key for RSA decryption")
 		}
 
-		return []byte(cmd.PriKey), nil
+		return []byte(c.PriKey), nil
 	}
 
 	// RSA Encryption
-	if cmd.PubKey == "" {
-		if cmd.PubkeyFilename != "" {
-			return os.ReadFile(cmd.PubkeyFilename)
+	if c.PubKey == "" {
+		if c.PubkeyFilename != "" {
+			return os.ReadFile(c.PubkeyFilename)
 		}
 
 		return nil, errors.New("missing public key for RSA encryption")
 	}
 
-	return []byte(cmd.PubKey), nil
+	return []byte(c.PubKey), nil
 }
 
-func (cmd *rsaCommand) crypt(
+func (c *cmdRSA) crypt(
 	mode gfc.AlgoMode,
 	buf gfc.Buffer,
 	key []byte,

@@ -10,15 +10,15 @@ import (
 	"github.com/soyart/gfc/pkg/gfc"
 )
 
-type aesCommand struct {
+type cmdAES struct {
 	AesMode string `arg:"-m,--mode" default:"GCM" placeholder:"MODE" help:"AES mode"`
 	Keyfile string `arg:"-k,--key,env:KEY" placeholder:"KEY" help:"256-bit keyfile for AES"`
 
 	baseCommand
 }
 
-func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
-	mode := strings.ToUpper(cmd.AesMode)
+func (c *cmdAES) algoMode() (gfc.AlgoMode, error) {
+	mode := strings.ToUpper(c.AesMode)
 	switch mode {
 	case "GCM":
 		return gfc.ModeAesGCM, nil
@@ -27,18 +27,18 @@ func (cmd *aesCommand) algoMode() (gfc.AlgoMode, error) {
 		return gfc.ModeAesCTR, nil
 	}
 
-	return gfc.ModeInvalid, errors.Wrapf(ErrInvalidModeAES, "unknown mode %s", cmd.AesMode)
+	return gfc.ModeInvalid, errors.Wrapf(ErrInvalidModeAES, "unknown mode %s", c.AesMode)
 }
 
-func (cmd *aesCommand) key() ([]byte, error) {
-	if len(cmd.Keyfile) == 0 {
+func (c *cmdAES) key() ([]byte, error) {
+	if len(c.Keyfile) == 0 {
 		return nil, nil
 	}
 
-	return os.ReadFile(cmd.Keyfile)
+	return os.ReadFile(c.Keyfile)
 }
 
-func (cmd *aesCommand) crypt(
+func (c *cmdAES) crypt(
 	mode gfc.AlgoMode,
 	buf gfc.Buffer,
 	key []byte,

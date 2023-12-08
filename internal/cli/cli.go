@@ -30,7 +30,6 @@ type subcommand interface {
 	crypt(mode gfc.AlgoMode, buf gfc.Buffer, key []byte, decrypt bool) (gfc.Buffer, error)
 }
 
-// TODO: Extract outfile validation and write into own functions?
 // Run is the application code for gfc.
 func (g *Gfc) Run() error {
 	var cmd subcommand
@@ -48,7 +47,8 @@ func (g *Gfc) Run() error {
 		return ErrMissingSubcommand
 	}
 
-	mode, err := cmd.algoMode()
+	// Check bad mode before open files
+	_, err := cmd.algoMode()
 	if err != nil {
 		return errors.Wrap(err, "invalid algorithm mode")
 	}
@@ -63,17 +63,21 @@ func (g *Gfc) Run() error {
 		return err
 	}
 
+	defer infile.Close()
+
 	outfile, err := openOutput(cmd.filenameOut())
 	if err != nil {
 		return err
 	}
+
+	defer outfile.Close()
 
 	buf, err := readInput(infile, cmd.stdinText())
 	if err != nil {
 		return errors.Wrap(err, "failed to read input")
 	}
 
-	buf, err = g.core(cmd, mode, buf, key)
+	buf, err = g.core(cmd, buf, key)
 	if err != nil {
 		return errors.Wrap(err, "cli.Gfc: core returned error")
 	}
@@ -122,14 +126,17 @@ func postProcess(
 // core pre-processes, encrypts/decrypts, and post-processes buf.
 func (g *Gfc) core(
 	cmd subcommand,
-	mode gfc.AlgoMode,
 	buf gfc.Buffer,
 	key []byte,
 ) (
 	gfc.Buffer,
 	error,
 ) {
-	var err error
+	mode, err := cmd.algoMode()
+	if err != nil {
+		panic("unexpected invalid mode")
+	}
+
 	decrypt := cmd.decrypt()
 	encoding := cmd.encoding()
 	compress := cmd.compression()

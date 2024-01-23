@@ -9,7 +9,7 @@ import (
 	"github.com/soyart/gfc/pkg/gfc"
 )
 
-type rsaCommand struct {
+type cmdRSA struct {
 	PubKey         string `arg:"env:PUB" placeholder:"PUB" help:"Public key string - e.g.: 'PUB=$(< id_rsa.pub) gfc rsa ...'"`
 	PriKey         string `arg:"env:PRI" placeholder:"PRI" help:"Private key string - e.g.: 'PRI=$(< id_rsa) gfc rsa -d ...'"`
 	PubkeyFilename string `arg:"-p,--public-key" placeholder:"PUBFILE" help:"Public key filename"`
@@ -19,35 +19,48 @@ type rsaCommand struct {
 }
 
 // rsaCommand only supports 1 RSA mode for now (OEAP)
-func (cmd *rsaCommand) algoMode() (gfc.AlgoMode, error) {
+func (c *cmdRSA) algoMode() (gfc.AlgoMode, error) {
 	return gfc.ModeRsaOEAP, nil
 }
 
-// rsaCommand will give key strings priority over key filenames
-func (cmd *rsaCommand) key() ([]byte, error) {
-	var key, keyFilename string
+func (c *cmdRSA) key() ([]byte, error) {
+	if c.DecryptFlag {
+		switch {
+		case c.PriKey == "" && c.PriKeyFilename == "":
+			return nil, errors.New("missing private key for RSA decryption")
 
-	if cmd.DecryptFlag {
-		key = cmd.PriKey
-		keyFilename = cmd.PriKeyFilename
+		case c.PriKey != "":
+			return []byte(c.PriKey), nil
 
-	} else {
-		key = cmd.PubKey
-		keyFilename = cmd.PubkeyFilename
+		default:
+			key, err := os.ReadFile(c.PriKeyFilename)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read RSA private key file")
+			}
+
+			return key, nil
+		}
 	}
 
-	if len(key) > 0 {
-		return []byte(key), nil
-	}
+	switch {
+	case c.PubKey == "" && c.PubkeyFilename == "":
+		return nil, errors.New("missing public key for RSA encryption")
 
-	if len(keyFilename) > 0 {
-		return os.ReadFile(keyFilename)
-	}
+	case c.PubKey == "":
+		return []byte(c.PubKey), nil
 
-	return nil, errors.New("empty rsa key and key filename")
+	default:
+		key, err := os.ReadFile(c.PubkeyFilename)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read RSA public key file")
+		}
+
+		return key, nil
+	}
 }
 
-func (cmd *rsaCommand) crypt(
+//nolint:wrapcheck
+func (c *cmdRSA) crypt(
 	mode gfc.AlgoMode,
 	buf gfc.Buffer,
 	key []byte,

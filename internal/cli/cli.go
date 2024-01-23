@@ -8,12 +8,12 @@ import (
 
 // Gfc represent the actual top-level gfc command.
 type Gfc struct {
-	AESCommand       *aesCommand      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption: see 'gfc aes --help'"`
-	RSACommand       *rsaCommand      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption: see 'gfc rsa --help'"`
-	XChaCha20Command *chaCha20Command `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption: see 'gfc cc20 --help'"`
+	CommandAES      *cmdAES      `arg:"subcommand:aes" help:"Use gfc-aes for AES encryption: see 'gfc aes --help'"`
+	CommandRSA      *cmdRSA      `arg:"subcommand:rsa" help:"Use gfc-rsa for RSA encryption: see 'gfc rsa --help'"`
+	CommandChaCha20 *cmdChaCha20 `arg:"subcommand:cc20" help:"Use gfc-cc20 for ChaCha20/XChaCha20-Poly1305 encryption: see 'gfc cc20 --help'"`
 }
 
-type standardCommand interface {
+type subcommand interface {
 	decrypt() bool                   // decrypt returns if user specified decryption operation
 	filenameIn() string              // filenameIn returns input filename
 	filenameOut() string             // filenameOut returns output filename
@@ -23,32 +23,32 @@ type standardCommand interface {
 	encoding() gfc.Encoding          // encoding returns if user wants to apply encoding to the pipeline, and if so, which one
 }
 
-type subcommand interface {
-	standardCommand
+type command interface {
+	subcommand
 
 	key() ([]byte, error)
 	crypt(mode gfc.AlgoMode, buf gfc.Buffer, key []byte, decrypt bool) (gfc.Buffer, error)
 }
 
-// TODO: Extract outfile validation and write into own functions?
 // Run is the application code for gfc.
 func (g *Gfc) Run() error {
-	var cmd subcommand
+	var cmd command
 	switch {
-	case g.AESCommand != nil:
-		cmd = g.AESCommand
+	case g.CommandAES != nil:
+		cmd = g.CommandAES
 
-	case g.RSACommand != nil:
-		cmd = g.RSACommand
+	case g.CommandRSA != nil:
+		cmd = g.CommandRSA
 
-	case g.XChaCha20Command != nil:
-		cmd = g.XChaCha20Command
+	case g.CommandChaCha20 != nil:
+		cmd = g.CommandChaCha20
 
 	default:
 		return ErrMissingSubcommand
 	}
 
-	mode, err := cmd.algoMode()
+	// Check bad mode before open files
+	_, err := cmd.algoMode()
 	if err != nil {
 		return errors.Wrap(err, "invalid algorithm mode")
 	}
@@ -63,17 +63,21 @@ func (g *Gfc) Run() error {
 		return err
 	}
 
+	defer infile.Close()
+
 	outfile, err := openOutput(cmd.filenameOut())
 	if err != nil {
 		return err
 	}
+
+	defer outfile.Close()
 
 	buf, err := readInput(infile, cmd.stdinText())
 	if err != nil {
 		return errors.Wrap(err, "failed to read input")
 	}
 
-	buf, err = g.core(cmd, mode, buf, key)
+	buf, err = g.core(cmd, buf, key)
 	if err != nil {
 		return errors.Wrap(err, "cli.Gfc: core returned error")
 	}
@@ -85,7 +89,7 @@ func (g *Gfc) Run() error {
 	return nil
 }
 
-// preProcess creates and modifies the input buffer before encryption/decryption stage.
+//nolint:wrapcheck
 func preProcess(
 	buf gfc.Buffer,
 	decrypt bool,
@@ -102,7 +106,7 @@ func preProcess(
 	return gfc.Compress(compress, buf)
 }
 
-// postProcess modifies the output buffer after encryption/decryption stage, jusr before gfc writes the buffer out to outfile
+//nolint:wrapcheck
 func postProcess(
 	buf gfc.Buffer,
 	decrypt bool,
@@ -121,15 +125,18 @@ func postProcess(
 
 // core pre-processes, encrypts/decrypts, and post-processes buf.
 func (g *Gfc) core(
-	cmd subcommand,
-	mode gfc.AlgoMode,
+	cmd command,
 	buf gfc.Buffer,
 	key []byte,
 ) (
 	gfc.Buffer,
 	error,
 ) {
-	var err error
+	mode, err := cmd.algoMode()
+	if err != nil {
+		panic("unexpected invalid mode")
+	}
+
 	decrypt := cmd.decrypt()
 	encoding := cmd.encoding()
 	compress := cmd.compression()

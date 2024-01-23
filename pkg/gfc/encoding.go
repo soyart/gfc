@@ -7,9 +7,10 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 func Decode(encoding Encoding, raw Buffer) (Buffer, error) {
@@ -30,7 +31,10 @@ func Decode(encoding Encoding, raw Buffer) (Buffer, error) {
 	}
 
 	decoded := new(bytes.Buffer)
-	decoded.ReadFrom(decoder)
+	_, err := decoded.ReadFrom(decoder)
+	if err != nil {
+		return nil, errors.Wrap(err, "io error - cannot read from decoder")
+	}
 
 	return decoded, nil
 }
@@ -64,7 +68,10 @@ func Encode(encoding Encoding, raw Buffer) (Buffer, error) {
 		return nil, errors.New("unknown encoding")
 	}
 
-	raw.WriteTo(encoder.(io.Writer))
+	_, err := raw.WriteTo(encoder.(io.Writer))
+	if err != nil {
+		return nil, errors.Wrap(err, "io error: can't write to encoder")
+	}
 
 	return encoded, nil
 }

@@ -1,24 +1,33 @@
 package main
 
 import (
-	"errors"
 	"os"
 
 	"github.com/alexflint/go-arg"
+	"github.com/pkg/errors"
 
 	"github.com/soyart/gfc/internal/cli"
 )
 
 const (
-	_          = iota // 0
-	otherError        // 1
-	userError         // 2
+	errOtherError = iota + 1
+	errUserError
 
-	// These strings will be concatenated with error message
-	// when writing out to stderr after an error occured in main
-	errorMsg     string = "gfc error: "
-	userErrorMsg string = "See gfc --help"
+	msgErr  string = "gfc error: "
+	msgHelp string = "See gfc --help"
 )
+
+//nolint:wrapcheck
+func die(exitStatus int, msg string) {
+	errStr := msgErr + msg + "\n"
+
+	if exitStatus == errUserError {
+		errStr = errStr + msgHelp + "\n"
+	}
+
+	os.Stderr.Write([]byte(errStr))
+	os.Exit(exitStatus)
+}
 
 func main() {
 	gfcCli := new(cli.Gfc)
@@ -34,22 +43,10 @@ func main() {
 			errors.Is(err, cli.ErrBadOutfileDir),
 			errors.Is(err, cli.ErrInvalidModeAES):
 
-			die(userError, err.Error())
+			die(errUserError, err.Error())
 
 		default:
-			die(otherError, err.Error())
+			die(errOtherError, err.Error())
 		}
 	}
-}
-
-func die(exitStatus int, msg string) {
-	errStr := errorMsg + msg + "\n"
-
-	switch exitStatus {
-	case userError:
-		errStr = errStr + userErrorMsg + "\n"
-	}
-
-	os.Stderr.Write([]byte(errStr))
-	os.Exit(exitStatus)
 }

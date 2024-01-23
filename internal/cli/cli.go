@@ -89,7 +89,7 @@ func (g *Gfc) Run() error {
 	return nil
 }
 
-// preProcess creates and modifies the input buffer before encryption/decryption stage.
+//nolint:wrapcheck
 func preProcess(
 	buf gfc.Buffer,
 	decrypt bool,
@@ -106,7 +106,7 @@ func preProcess(
 	return gfc.Compress(compress, buf)
 }
 
-// postProcess modifies the output buffer after encryption/decryption stage, jusr before gfc writes the buffer out to outfile
+//nolint:wrapcheck
 func postProcess(
 	buf gfc.Buffer,
 	decrypt bool,

@@ -21,11 +21,11 @@ import (
 const blockSizeAES256CTR = 16
 
 func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
-	key, salt, err := keySaltPBKDF2(aesKey, nil)
+	key, salt, err := genKeySaltPBKDF2(aesKey, nil)
 	if err != nil {
 		err = errors.Wrap(err, ErrPBKDF2KeySalt.Error())
 
-		return nil, errors.Wrap(err, "AES256-CTR encryption")
+		return nil, errors.Wrap(err, "PBKDF2 for AES256-CTR")
 	}
 
 	block, err := aes.NewCipher(key)
@@ -60,7 +60,7 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 		}
 	}
 
-	return formatOutputGfcSymm(
+	return serializeV1(
 		ciphertext.Bytes(),
 		iv,
 		salt,
@@ -68,7 +68,7 @@ func EncryptCTR(plaintext Buffer, aesKey []byte) (Buffer, error) {
 }
 
 func DecryptCTR(ciphertext Buffer, aesKey []byte) (Buffer, error) {
-	lenMsg, _, key, iv, err := decodeOutputGfcSymm(ciphertext, aesKey, blockSizeAES256CTR)
+	lenMsg, _, key, iv, err := deserializeV1(ciphertext, aesKey, blockSizeAES256CTR)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrUnmarshalSymmAEAD.Error())
 	}

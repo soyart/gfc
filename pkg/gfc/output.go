@@ -7,8 +7,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// formatOutputGfcSymm serializes the output for all symmetric key encryption by gfc
-func formatOutputGfcSymm(
+// serializeV1 serializes the output for all symmetric key encryption by gfc.
+// The format of the output is ciphertext:nonce:salt
+func serializeV1(
 	ciphertext []byte,
 	nonce []byte,
 	salt []byte,
@@ -41,8 +42,8 @@ func formatOutputGfcSymm(
 	return buf, nil
 }
 
-// decodeOutputGfcSymm unmarshals gfc symmetric key encryption output into message length, ciphertext, key, and nonce
-func decodeOutputGfcSymm(
+// deserializeV1 unmarshals gfc symmetric key encryption output into message length, ciphertext, key, and nonce
+func deserializeV1(
 	ciphertext Buffer,
 	key []byte,
 	nonceSize int,
@@ -59,7 +60,7 @@ func decodeOutputGfcSymm(
 	saltStart := lenGfcCiphertext - lenPBKDF2Salt
 	salt := ciphertextBytes[saltStart:]
 
-	key, _, err := keySaltPBKDF2(key, salt)
+	key, _, err := genKeySaltPBKDF2(key, salt)
 	if err != nil {
 		return 0, nil, nil, nil, errors.Wrap(err, ErrPBKDF2KeySalt.Error())
 	}

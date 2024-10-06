@@ -30,10 +30,10 @@ func die(exitStatus int, msg string) {
 }
 
 func main() {
-	gfcCli := new(cli.Gfc)
-	arg.MustParse(gfcCli)
+	g := new(cli.Gfc)
+	arg.MustParse(g)
 
-	if err := gfcCli.Run(); err != nil {
+	if err := g.Run(); err != nil {
 		switch {
 		case
 			errors.Is(err, cli.ErrMissingSubcommand),
